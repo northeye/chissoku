@@ -117,8 +117,13 @@ func main() {
 	opts.QoS = 1
 	opts.ClientID = `chissoku`
 	opts.Interval = 60
-	if _, err := flags.Parse(&opts); err != nil {
+	if _, err := flags.NewParser(&opts, flags.HelpFlag|flags.PassDoubleDash).Parse(); err != nil && !opts.Version {
+		fmt.Println(err.Error())
 		os.Exit(1)
+	}
+	if opts.Version {
+		fmt.Println("v" + Version)
+		return
 	}
 	if opts.Quiet {
 		logWriter = io.Discard

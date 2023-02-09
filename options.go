@@ -32,4 +32,7 @@ type Options struct {
 	Password string `short:"p" long:"password" description:"password for MQTT authentication"`
 	// Tags tagging data
 	Tags []string `long:"tags" description:"Add tags field to json output. ex: \"one,two,three\""`
+
+	// Version
+	Version bool `short:"v" long:"version" description:"print version"`
 }
