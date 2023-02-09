@@ -1,0 +1,81 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.166.1/containers/debian
+{
+	"name": "chissoku",
+	"build": {
+		"dockerfile": "Dockerfile",
+		"args": {
+			"VARIANT": "1.20"
+		}
+	},
+	"postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/chissoku /go && cd /home/vscode/chissoku && git clone git@github.com:northeye/chissoku .",
+	"runArgs": [ "--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined" ],
+	"mounts": [
+		"source=chissoku-gopath,target=/go,type=volume"
+	],
+	"workspaceMount": "source=chissoku-repo,target=/home/vscode/chissoku,type=volume",
+	"workspaceFolder": "/home/vscode/chissoku",
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"terminal.integrated.defaultProfile.linux": "zsh",
+				"go.useLanguageServer": true,
+				"go.gopath": "/go",
+				"go.lintTool": "revive",
+				"go.formatTool": "goimports",
+				"go.testFlags": [
+					"-race",
+					"-v",
+					"-count=1"
+				],
+				"[html]": {
+					"editor.formatOnSave": false
+				},
+				"[typescript]": {
+					"editor.formatOnSave": false
+				},
+				"[javascript]": {
+					"editor.formatOnSave": false
+				},
+				"[go]": {
+					"editor.trimAutoWhitespace": true,
+					"editor.formatOnSave": true
+				},
+				"editor.bracketPairColorization.enabled": true,
+				"editor.guides.bracketPairs": "active",
+				//exludes fies & folders in search indexing
+				"search.exclude": {
+					"**/node_modules": true,
+					"**/bower_components": true,
+					"**/env": true,
+					"**/venv": true
+				},
+				//exludes fies & folders for watcher service
+				"files.watcherExclude": {
+					"**/.git/objects/**": true,
+					"**/.git/subtree-cache/**": true,
+					"**/node_modules/**": true,
+					"**/env/**": true,
+					"**/venv/**": true,
+					"env-*": true,
+					"**/vendor/**": true
+				}
+			},
+			"extensions": [
+				"golang.go",
+				"2gua.rainbow-brackets",
+				"cobaltblu27.rainbow-highlighter",
+				"oderwat.indent-rainbow",
+				"ms-ceintl.vscode-language-pack-ja",
+				"GitHub.vscode-pull-request-github",
+				"eamodio.gitlens",
+				"mohsen1.prettify-json"
+			]
+		}
+	},
+	"remoteEnv": {
+		"GOPATH": "/go",
+		"GO111MODULE": "on"
+	},
+	"remoteUser": "vscode"
+}
