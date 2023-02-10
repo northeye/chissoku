@@ -61,8 +61,6 @@ func prepareDevice(p serial.Port, s *bufio.Scanner) error {
 
 func main() {
 	var opts Options
-	opts.ClientID = `chissoku`
-	opts.Interval = 60
 
 	kong.Parse(&opts,
 		kong.Name(ProgramName),

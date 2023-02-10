@@ -9,14 +9,14 @@ type Options struct {
 	// Don't outout to STDOUT
 	NoStdout bool `short:"n" long:"no-stdout" help:"don't output to stdout"`
 	// Output interval (sec)
-	Interval int `short:"i" long:"interval" help:"interval (second) for output. default: '60'"`
+	Interval int `short:"i" long:"interval" help:"interval (second) for output. default: '60'" default:"60"`
 	// Quiet
 	Quiet bool `long:"quiet" help:"don't output any process logs to STDERR"`
 
 	// MQTT Address
 	MqttAddress string `short:"m" long:"mqtt-address" help:"MQTT address like 'tcp://mosquitto:1883'"`
 	// MQTT ClientID
-	ClientID string `short:"c" long:"client-id" help:"Client ID for MQTT. default: 'chissoku'"`
+	ClientID string `short:"c" long:"client-id" help:"Client ID for MQTT. default: 'chissoku'" default:"chissoku"`
 	// MQTT Topic
 	Topic string `short:"t" long:"topic" help:"MQTT Topic name to publish"`
 	// MQTT Qos
