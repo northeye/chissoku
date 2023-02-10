@@ -6,7 +6,6 @@ import (
 	"os"
 )
 
-// build
 var logWriter = io.Writer(os.Stderr)
 
 // common
@@ -16,6 +15,10 @@ func logPrint(s string) {
 
 func logPrintf(f string, v ...any) {
 	fmt.Fprintf(logWriter, f, v...)
+}
+
+func logPrintln(s string) {
+	fmt.Fprintln(logWriter, s)
 }
 
 // Info

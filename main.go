@@ -3,8 +3,6 @@ package main
 
 import (
 	"bufio"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,12 +12,11 @@ import (
 	"strconv"
 	"time"
 
-	mqtt "github.com/eclipse/paho.mqtt.golang"
-	flags "github.com/jessevdk/go-flags"
+	"github.com/alecthomas/kong"
 	"go.bug.st/serial"
 )
 
-// ISO8601Time utitlity
+// ISO8601Time utility
 type ISO8601Time time.Time
 
 // ISO8601 date time format
@@ -39,63 +36,13 @@ type Data struct {
 	Timestamp   ISO8601Time `json:"timestamp"`
 }
 
-func newTLSConfig(opts *Options) (*tls.Config, error) {
-	logInfof("Preparing SSL/TLS Configuration...")
-	cfg := &tls.Config{
-		InsecureSkipVerify: false,
-	}
-
-	if opts.CAFile != "" {
-		if c, err := os.ReadFile(opts.CAFile); err == nil {
-			certpool := x509.NewCertPool()
-			certpool.AppendCertsFromPEM(c)
-			cfg.RootCAs = certpool
-			logPrint(" RootCA")
-		} else {
-			logError(err.Error())
-			return nil, err
-		}
-	}
-
-	if opts.CertFile != "" && opts.KeyFile != "" {
-		if cert, err := tls.LoadX509KeyPair(opts.CertFile, opts.KeyFile); err == nil {
-			cfg.Certificates = []tls.Certificate{cert}
-			logPrint(" ClientCert")
-		} else {
-			logError(err.Error())
-			return nil, err
-		}
-	}
-	logPrint(" OK.")
-	return cfg, nil
-}
-
-func newMqttClient(opts *Options) mqtt.Client {
-	if opts.MqttAddress == "" {
-		return nil
-	}
-	o := mqtt.NewClientOptions()
-	o.AddBroker(opts.MqttAddress)
-	if opts.ClientID != "" {
-		o.SetClientID(opts.ClientID)
-	}
-	if opts.MqttAddress[:6] == `ssl://` {
-		if t, err := newTLSConfig(opts); err == nil {
-			o.SetTLSConfig(t)
-		} else {
-			logWarningln("could not enfoce SSL/TLS option, disabled at this time.")
-		}
-	}
-	return mqtt.NewClient(o)
-}
-
 // initialize and prepare the device
-func prepareDevice(w io.Writer, s *bufio.Scanner) error {
+func prepareDevice(p serial.Port, s *bufio.Scanner) error {
 	logInfo("Prepare device...:")
 	defer logPrint("\n")
 	for _, c := range []string{"STP", "ID?", "STA"} {
 		logPrintf(" %v", c)
-		if _, err := w.Write([]byte(c + "\r\n")); err != nil {
+		if _, err := p.Write([]byte(c + "\r\n")); err != nil {
 			return err
 		}
 		time.Sleep(time.Millisecond * 100) // wait
@@ -114,17 +61,14 @@ func prepareDevice(w io.Writer, s *bufio.Scanner) error {
 
 func main() {
 	var opts Options
-	opts.QoS = 1
 	opts.ClientID = `chissoku`
 	opts.Interval = 60
-	if _, err := flags.NewParser(&opts, flags.HelpFlag|flags.PassDoubleDash).Parse(); err != nil && !opts.Version {
-		fmt.Println(err.Error())
-		os.Exit(1)
-	}
-	if opts.Version {
-		fmt.Println("v" + Version)
-		return
-	}
+
+	kong.Parse(&opts,
+		kong.Name(ProgramName),
+		kong.Vars{"version": "v" + Version},
+		kong.Description(`A CO2 sensor reader`))
+
 	if opts.Quiet {
 		logWriter = io.Discard
 	}
@@ -146,6 +90,12 @@ func main() {
 	s := bufio.NewScanner(port)
 	s.Split(bufio.ScanLines)
 
+	if err := prepareDevice(port, s); err != nil {
+		logErrorln(err.Error())
+		port.Close()
+		os.Exit(1)
+	}
+
 	// mqtt
 	client := newMqttClient(&opts)
 	if client != nil {
@@ -153,13 +103,9 @@ func main() {
 		if t := client.Connect(); t.Wait() && t.Error() != nil {
 			logErrorf("%v, disable MQTT output at the time.\n", t.Error())
 			client = nil
+		} else {
+			defer client.Disconnect(1000)
 		}
-	}
-
-	if err := prepareDevice(port.(io.Writer), s); err != nil {
-		logError(" " + err.Error())
-		port.Close()
-		os.Exit(1)
 	}
 
 	// trap SIGINT
@@ -169,12 +115,6 @@ func main() {
 	go func() {
 		<-sigch
 		port.Write([]byte("STP\r\n"))
-		time.Sleep(time.Millisecond * 100)
-		port.Close()
-		if client != nil {
-			client.Disconnect(1000)
-		}
-		os.Exit(0)
 	}()
 
 	// serial reader channel
@@ -184,21 +124,18 @@ func main() {
 
 	// publisher
 	go func() {
-		for {
-			select {
-			case d := <-p:
-				d.Tags = opts.Tags
-				b, err := json.Marshal(d)
-				if err != nil {
-					logError(err.Error())
-					continue
-				}
-				if !opts.NoStdout {
-					fmt.Println(string(b))
-				}
-				if client != nil {
-					client.Publish(opts.Topic, byte(opts.QoS), opts.Retained, b)
-				}
+		for d := range p {
+			d.Tags = opts.Tags
+			b, err := json.Marshal(d)
+			if err != nil {
+				logError(err.Error())
+				continue
+			}
+			if !opts.NoStdout {
+				fmt.Println(string(b))
+			}
+			if client != nil {
+				client.Publish(opts.Topic, byte(opts.Qos), opts.Retained, b)
 			}
 		}
 	}()
@@ -214,7 +151,7 @@ func main() {
 				if cur == nil {
 					continue
 				}
-				p <- cur
+				p <- cur  // publish current
 				cur = nil // dismiss
 			case cur = <-r:
 			}
@@ -233,6 +170,8 @@ func main() {
 			d.Temperature, _ = strconv.ParseFloat(m[0][3], 64)
 			d.Timestamp = ISO8601Time(time.Now())
 			r <- d
+		} else if text[:6] == `OK STP` {
+			return // exit 0
 		} else {
 			logWarningf("Read unmatched string: %v", text)
 		}
