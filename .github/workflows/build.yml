@@ -18,8 +18,8 @@ jobs:
         target_arch: ["amd64", "arm64"]
     runs-on: ubuntu-latest
     env:
+      REMOTE_CACHE: "ghcr.io/${{ github.repository_owner }}/earthly-cache"
       EARTHLY_MAX_REMOTE_CACHE: true
-      EARTHLY_REMOTE_CACHE: "ghcr.io/${{ github.repository }}:cache"
       EARTHLY_PUSH: true
       EARTHLY_CI: true
     steps:
@@ -34,7 +34,9 @@ jobs:
       - name: Earthly
         uses: earthly/actions-setup@v1
       - name: +build ${{ matrix.target_os }}/${{ matrix.target_arch }}
-        run: earthly +build --TARGET_OS=${{ matrix.target_os }} --TARGET_ARCH=${{ matrix.target_arch }}
+        run: |
+          export EARTHLY_REMOTE_CACHE="${{ env.REMOTE_CACHE }}:$(basename ${{ github.repository }})"
+          earthly +build --TARGET_OS=${{ matrix.target_os }} --TARGET_ARCH=${{ matrix.target_arch }}
 
   lint:
     permissions:
@@ -43,8 +45,8 @@ jobs:
       packages: write
     runs-on: ubuntu-latest
     env:
+      REMOTE_CACHE: "ghcr.io/${{ github.repository_owner }}/earthly-cache"
       EARTHLY_MAX_REMOTE_CACHE: true
-      EARTHLY_REMOTE_CACHE: "ghcr.io/${{ github.repository }}:cache"
       EARTHLY_CI: true
       EARTHLY_PUSH: true
     steps:
@@ -69,7 +71,9 @@ jobs:
 #      - name: Setup Earthly
 #        uses: earthly/actions-setup@v1
 #      - name: earthly +lint
-#        run: earthly -a +lint/lint-report.xml ./lint-report.xml
+#        run: |
+#          export EARTHLY_REMOTE_CACHE="${{ env.REMOTE_CACHE }}:$(basename ${{ github.repository }})"
+#          earthly -a +lint/lint-report.xml ./lint-report.xml
 #      - name: Report
 #        if: always()
 #        uses: mikepenz/action-junit-report@v3
