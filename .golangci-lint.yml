@@ -1,0 +1,42 @@
+run:
+  modules-download-mode: readonly
+  timeout: 10m
+  tests: true
+  skip-files:
+  - ".*_generated\\.go$"
+
+linters:
+  enable:
+    - goconst
+    - stylecheck
+    - staticcheck
+    - predeclared
+    - tparallel
+    - unconvert
+    - unparam
+    - whitespace
+    - gosimple
+    # - wastedassign
+linters-settings:
+  goconst:
+    min-len: 4
+    min-occurrences: 4
+    ignore-tests: true
+  gocyclo:
+    min-complexity: 10
+  golint:
+    min-confidence: 0.8
+  dupl:
+    threshold: 100
+  stylecheck:
+    checks: [ "all", "-ST1000", "-ST1003", "-ST1016" ]
+  errcheck:
+    exclude-functions:
+      - (go.bug.st/serial.Port).Write
+      - (go.bug.st/serial.Port).SetReadTimeout
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - errcheck
