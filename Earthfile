@@ -14,7 +14,7 @@ lint:
     WORKDIR /workspace/lint
     COPY . .
     TRY
-        RUN --no-cache golangci-lint run --out-format junit-xml > lint-report.xml || ls -a
+        RUN --no-cache golangci-lint run -c ./.golangci-lint.yml --out-format junit-xml > lint-report.xml || ls -a
     FINALLY
         SAVE ARTIFACT lint-report.xml AS LOCAL lint-report.xml
     END

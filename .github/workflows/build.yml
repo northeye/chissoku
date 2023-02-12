@@ -56,8 +56,15 @@ jobs:
 #          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Checkout
         uses: actions/checkout@v3
+      - name: setup-go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.20'
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
+        with:
+          args: "-c ./.golangci-lint.yml"
+
 
 #      - name: Setup Earthly
 #        uses: earthly/actions-setup@v1
