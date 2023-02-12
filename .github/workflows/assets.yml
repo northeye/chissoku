@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       EARTHLY_MAX_REMOTE_CACHE: true
-      EARTHLY_REMOTE_CACHE: "ghcr.io/northeye/devtest:cache"
+      EARTHLY_REMOTE_CACHE: "ghcr.io/${{ github.repository }}:cache"
       EARTHLY_PUSH: true
       EARTHLY_CI: true
     steps:
