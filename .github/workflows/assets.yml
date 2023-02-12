@@ -1,0 +1,39 @@
+name: assets
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    permissions:
+      contents: write
+      packages: write
+      pull-requests: read
+    strategy:
+      matrix:
+        target_os: ["linux", "darwin", "windows"]
+        target_arch: ["amd64", "arm64"]
+    runs-on: ubuntu-latest
+    env:
+      EARTHLY_MAX_REMOTE_CACHE: true
+      EARTHLY_REMOTE_CACHE: "ghcr.io/northeye/devtest:cache"
+      EARTHLY_PUSH: true
+      EARTHLY_CI: true
+    steps:
+      - name: Login to ghcr.io
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Earthly
+        uses: earthly/actions-setup@v1
+      - name: +build ${{ matrix.target_os }}/${{ matrix.target_arch }}
+        run: earthly -a +build/release --TARGET_OS=${{ matrix.target_os }} --TARGET_ARCH=${{ matrix.target_arch }} ./release/
+      - name: Upload assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ./release/**/*

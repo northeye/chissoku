@@ -1,0 +1,72 @@
+name: build
+
+on:
+  push:
+    branches-ignore:
+      - "release-please-*"
+    tags-ignore:
+      - "v*.*.*"
+
+jobs:
+  build:
+    permissions:
+      contents: write
+      packages: write
+    strategy:
+      matrix:
+        target_os: ["linux", "darwin", "windows"]
+        target_arch: ["amd64", "arm64"]
+    runs-on: ubuntu-latest
+    env:
+      EARTHLY_MAX_REMOTE_CACHE: true
+      EARTHLY_REMOTE_CACHE: "ghcr.io/northeye/devtest:cache"
+      EARTHLY_PUSH: true
+      EARTHLY_CI: true
+    steps:
+      - name: Login to ghcr.io
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Earthly
+        uses: earthly/actions-setup@v1
+      - name: +build ${{ matrix.target_os }}/${{ matrix.target_arch }}
+        run: earthly +build --TARGET_OS=${{ matrix.target_os }} --TARGET_ARCH=${{ matrix.target_arch }}
+
+  lint:
+    permissions:
+      actions: write
+      contents: write
+      packages: write
+    runs-on: ubuntu-latest
+    env:
+      EARTHLY_MAX_REMOTE_CACHE: true
+      EARTHLY_REMOTE_CACHE: "ghcr.io/northeye/devtest:cache"
+      EARTHLY_CI: true
+      EARTHLY_PUSH: true
+    steps:
+#      - name: Login to ghcr.io
+#        uses: docker/login-action@v2
+#        with:
+#          registry: ghcr.io
+#          username: ${{ github.repository_owner }}
+#          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+
+#      - name: Setup Earthly
+#        uses: earthly/actions-setup@v1
+#      - name: earthly +lint
+#        run: earthly -a +lint/lint-report.xml ./lint-report.xml
+#      - name: Report
+#        if: always()
+#        uses: mikepenz/action-junit-report@v3
+#        with:
+#          report_paths: lint-report.xml
+#          annotate_only: true
+#          detailed_summary: true
