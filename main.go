@@ -39,7 +39,7 @@ type Data struct {
 // initialize and prepare the device
 func prepareDevice(p serial.Port, s *bufio.Scanner) error {
 	logInfo("Prepare device...:")
-	defer logPrint("\n")
+	defer logPrintln("")
 	for _, c := range []string{"STP", "ID?", "STA"} {
 		logPrintf(" %v", c)
 		if _, err := p.Write([]byte(c + "\r\n")); err != nil {
@@ -84,7 +84,7 @@ func main() {
 	defer func() { port.Write([]byte("STP\r\n")); time.Sleep(time.Millisecond * 100); port.Close() }()
 
 	// serial reader
-	port.SetReadTimeout(time.Duration(time.Second * 10))
+	port.SetReadTimeout(time.Second * 10)
 	s := bufio.NewScanner(port)
 	s.Split(bufio.ScanLines)
 
