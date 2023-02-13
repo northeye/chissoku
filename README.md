@@ -20,12 +20,16 @@ $ go install github.com/northeye/chissoku@latest
 
 シリアルデバイスが `/dev/ttyACM0` の場合 (Linux等)
 ```sh
-$ chissoku /dev/ttyACM0
+$ ./chissoku /dev/ttyACM0 --tags Living
+I: Prepare device... STP ID? STA OK.
+{"co2":1242,"humidity":31.3,"temperature":29.4,"tags":["Living"],"timestamp":"2023-02-01T20:50:51.240+09:00"}
 ```
 
 シリアルデバイスが `COM3` の場合(Windows)
 ```cmd.exe
-C:\> chissoku COM3
+C:\> chissoku.exe COM3 --tags Living
+I: Prepare device... STP ID? STA OK.
+{"co2":1242,"humidity":31.3,"temperature":29.4,"tags":["Living"],"timestamp":"2023-02-01T20:50:51.240+09:00"}
 ```
 
 ※ センサーデータ(JSON)以外のプロセス情報は標準エラー(stderr)に出力されます。
@@ -63,7 +67,6 @@ MQTTアドレスに何も指定しなければ送信しません。
 |-n, --no-stdout|標準出力に出力しない|
 |-i, --interval=`INT`|出力間隔(n秒) `default: 60`|
 |--quiet|標準エラーの出力をしない|
-|-r, --retained|MQTT Publishに `retained` フラグをつける|
 |--tags=`TAG,...`|出力するJSONに `tags` フィールドを追加する(コンマ区切り文字列)|
 |-h, --help|オプションヘルプを表示する|
 |-v, --version|バージョン情報を表示する|

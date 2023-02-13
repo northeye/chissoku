@@ -133,7 +133,7 @@ func main() {
 				fmt.Println(string(b))
 			}
 			if client != nil {
-				client.Publish(opts.Topic, byte(opts.Qos), opts.Retained, b)
+				client.Publish(opts.Topic, byte(opts.Qos), false, b)
 			}
 		}
 	}()

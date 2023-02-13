@@ -21,8 +21,6 @@ type Options struct {
 	Topic string `short:"t" long:"topic" help:"MQTT Topic name to publish"`
 	// MQTT Qos
 	Qos int `short:"q" long:"qos" help:"MQTT Topic name to publish. default: '0'"`
-	// MQTT retained
-	Retained bool `short:"r" long:"retained" help:"MQTT Publish retained flag. default: false"`
 	// SSL CA File
 	CAFile string `long:"cafile" help:"Root CA Cert file for SSL" type:"existingfile"`
 	// SSL Cert
