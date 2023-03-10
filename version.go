@@ -4,4 +4,4 @@ package main
 const ProgramName = `chissoku`
 
 // Version - program versoin
-const Version = "1.0.3" // x-release-please-version
+const Version = "1.0.4" // x-release-please-version
