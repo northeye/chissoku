@@ -20,7 +20,7 @@ import (
 type ISO8601Time time.Time
 
 // ISO8601 date time format
-const ISO8601 = `2006-01-02T15:04:05.000+09:00`
+const ISO8601 = `2006-01-02T15:04:05.000Z07:00`
 
 // MarshalJSON interface function
 func (t ISO8601Time) MarshalJSON() ([]byte, error) {
