@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.4](https://github.com/northeye/chissoku/compare/v1.0.3...v1.0.4) (2023-03-10)
+
+
+### Bug Fixes
+
+* time zone in format ([ebb55f5](https://github.com/northeye/chissoku/commit/ebb55f52acfb4205a65a6022fb1d2b8aecb214d3))
+
 ## [1.0.3](https://github.com/northeye/chissoku/compare/v1.0.2...v1.0.3) (2023-02-12)
 
 
