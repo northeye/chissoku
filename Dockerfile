@@ -1,12 +1,14 @@
 FROM golang:1.20-alpine AS build
 
-RUN mkdir -p /tmp/build
-COPY go.* *.go /tmp/build/
-RUN cd /tmp/build && go install .
+WORKDIR /build
+COPY go.* .
+RUN go mod download
+COPY *.go .
+RUN go build .
 
 FROM gcr.io/distroless/static-debian11:latest
 
-COPY --from=build /go/bin/chissoku /usr/local/bin/
+COPY --from=build /build/chissoku /usr/local/bin/
 
 ENTRYPOINT [ "/usr/local/bin/chissoku" ]
 CMD [ "--help" ]
