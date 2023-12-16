@@ -16,6 +16,7 @@ linters:
     - unparam
     - whitespace
     - gosimple
+    - errorlint
     # - wastedassign
 linters-settings:
   goconst:

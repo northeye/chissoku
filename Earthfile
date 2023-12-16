@@ -1,12 +1,12 @@
-VERSION --try 0.6
-FROM golang:1.20
+VERSION --try 0.7
+FROM golang:1.21
 
 ENV GOPATH=/go
 ENV PATH=$GOPATH/bin:$PATH
 
 deps:
     RUN apt-get update && apt-get install -y --no-install-recommends p7zip
-    RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.51.1
+    RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
     SAVE IMAGE --cache-hint
 
 lint:
