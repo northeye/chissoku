@@ -1,0 +1,71 @@
+{
+    "name": "chissoku",
+    "service": "chissoku",
+    "dockerComposeFile": [
+        "docker-compose.yml"
+    ],
+    "workspaceFolder": "/work/chissoku",
+    "remoteEnv": {
+        "GOPATH": "/home/vscode/go"
+    },
+    "postCreateCommand": "go install mvdan.cc/gofumpt@latest && go install gotest.tools/gotestsum@latest",
+    // Set *default* container specific settings.json values on container create.
+    "customizations": {
+        "settings": {
+            "[go]": {
+                "editor.formatOnSave": true,
+                "editor.trimAutoWhitespace": true
+            },
+            "editor.bracketPairColorization.enabled": true,
+            "editor.guides.bracketPairs": "active",
+            //exludes fies & folders for watcher service
+            "files.watcherExclude": {
+                "**/.git/objects/**": true,
+                "**/.git/subtree-cache/**": true,
+            },
+            "go.formatTool": "goimports",
+            "go.lintTool": "revive",
+            "go.testFlags": [
+                "-race",
+                "-v",
+                "-count=1"
+            ],
+            "go.ui.semanticTokens": true,
+            "gopls": {
+                "ui.semanticTokens": true,
+                // you can optionally turn on these features for more colors
+                // see https://go.dev/issue/45753 and https://go.dev/issue/45792
+                "ui.noSemanticString": true, // delegates string syntax highlighting to vscode
+                "ui.noSemanticNumber": true // delegates number syntax highlighting to vscode
+            },
+            "terminal.integrated.defaultProfile.linux": "zsh"
+        },
+        "vscode": {
+            "extensions": [
+                "golang.go",
+                "2gua.rainbow-brackets",
+                "cobaltblu27.rainbow-highlighter",
+                "oderwat.indent-rainbow",
+                "ms-ceintl.vscode-language-pack-ja",
+                "GitHub.vscode-pull-request-github",
+                "eamodio.gitlens",
+                "mohsen1.prettify-json"
+            ]
+        }
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/go:1": {},
+        "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+        "ghcr.io/rocker-org/devcontainer-features/apt-packages:1": {
+            "packages": "lv,zsh,vim"
+        }
+    },
+    // Use 'forwardPorts' to make a list of ports inside the container available locally.
+    // "forwardPorts": [],
+    // Uncomment to use the Docker CLI from inside the container. See https://aka.ms/vscode-remote/samples/docker-from-docker.
+    // "mounts": [ "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind" ],
+    // Uncomment when using a ptrace-based debugger like C++, Go, and Rust
+    // "runArgs": [ "--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined" ],
+    // Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+    "remoteUser": "vscode"
+}

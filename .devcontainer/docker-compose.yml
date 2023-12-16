@@ -1,0 +1,17 @@
+name: chissoku
+version: '3.3'
+
+services:
+  chissoku:
+    hostname: chissoku
+    build:
+      context: .
+    environment:
+      - LANG=ja_JP.UTF-8
+    volumes:
+      - ../:/work/chissoku
+      - home:/home/vscode
+    command: sleep infinity
+
+volumes:
+  home:
