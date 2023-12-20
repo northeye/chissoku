@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/northeye/chissoku/compare/v1.0.4...v2.0.0) (2023-12-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* Incompatible cli options.
+
+### Code Refactoring
+
+* overhaul program. ([ea11f6e](https://github.com/northeye/chissoku/commit/ea11f6e008666f06363d2ff9331358048f02f3f3))
+
 ## [1.0.4](https://github.com/northeye/chissoku/compare/v1.0.3...v1.0.4) (2023-03-10)
 
 
