@@ -35,7 +35,7 @@ build:
     ELSE
         RUN tar -czf release/chissoku-$(go run . -v)-$TARGET_OS-$TARGET_ARCH.tar.gz chissoku
     END
-    SAVE ARTIFACT ./release/* release/ AS LOCAL ./release/
+    SAVE ARTIFACT ./release/*  AS LOCAL ./release/
 
 release:
     # NOT IMPLEMENTED YET
