@@ -6,6 +6,8 @@ on:
       - "release-please-*"
     tags-ignore:
       - "v*.*.*"
+      - "v*.*"
+      - "v*"
 
 jobs:
   build:
