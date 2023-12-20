@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/northeye/chissoku/compare/v2.0.0...v2.0.1) (2023-12-20)
+
+
+### Bug Fixes
+
+* **ci:** Bump version due to CI related fixes ([65a5f3c](https://github.com/northeye/chissoku/commit/65a5f3c0e465d7bb0d3dd3b50874dbeb1350dcfc))
+
 ## [2.0.0](https://github.com/northeye/chissoku/compare/v1.0.4...v2.0.0) (2023-12-20)
 
 
