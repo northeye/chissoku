@@ -24,8 +24,11 @@ build:
     ARG TARGET_OS=$(go env GOOS)
     ARG TARGET_ARCH=$(go env GOARCH)
     WORKDIR /workspace/build
-    COPY go.* *.go ./
-    RUN GOOS=$TARGET_OS GOARCH=$TARGET_ARCH go build .
+    COPY go.mod go.sum .
+    RUN go mod download
+    COPY . .
+    RUN mkdir dist
+    RUN GOOS=$TARGET_OS GOARCH=$TARGET_ARCH go build ./
     RUN mkdir -p release
     IF [ "$TARGET_OS" = "windows" ]
         RUN 7zr a release/chissoku-$(go run . -v)-windows-$TARGET_ARCH.7z chissoku.exe
