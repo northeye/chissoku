@@ -35,7 +35,7 @@ jobs:
       - name: +build ${{ matrix.target_os }}/${{ matrix.target_arch }}
         run: |
           export EARTHLY_REMOTE_CACHE="${{ env.REMOTE_CACHE }}:$(basename ${{ github.repository }})"
-          earthly -a +build/release --TARGET_OS=${{ matrix.target_os }} --TARGET_ARCH=${{ matrix.target_arch }} ./release/
+          earthly -a +build/release --TARGET_OS=${{ matrix.target_os }} --TARGET_ARCH=${{ matrix.target_arch }} ./
       - name: Upload assets
         uses: softprops/action-gh-release@v1
         with:

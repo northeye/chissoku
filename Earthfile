@@ -27,15 +27,14 @@ build:
     COPY go.mod go.sum .
     RUN go mod download
     COPY . .
-    RUN mkdir dist
-    RUN GOOS=$TARGET_OS GOARCH=$TARGET_ARCH go build ./
-    RUN mkdir -p release
+    RUN CGO_ENABLED=0 GOOS=$TARGET_OS GOARCH=$TARGET_ARCH go build ./
+    RUN rm -rf release && mkdir -p release
     IF [ "$TARGET_OS" = "windows" ]
         RUN 7zr a release/chissoku-$(go run . -v)-windows-$TARGET_ARCH.7z chissoku.exe
     ELSE
         RUN tar -czf release/chissoku-$(go run . -v)-$TARGET_OS-$TARGET_ARCH.tar.gz chissoku
     END
-    SAVE ARTIFACT ./release/*  AS LOCAL ./release/
+    SAVE ARTIFACT release/* release/
 
 release:
     # NOT IMPLEMENTED YET
