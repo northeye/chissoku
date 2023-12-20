@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.2](https://github.com/northeye/chissoku/compare/v2.0.1...v2.0.2) (2023-12-20)
+
+
+### Bug Fixes
+
+* **earthly:** fix failed to retrieve artifact ([8b2c54c](https://github.com/northeye/chissoku/commit/8b2c54c30fb62223f03869685ded934c46d5d076))
+
 ## [2.0.1](https://github.com/northeye/chissoku/compare/v2.0.0...v2.0.1) (2023-12-20)
 
 
