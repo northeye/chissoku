@@ -9,7 +9,7 @@ import (
 // Outputter the outputter interface
 type Outputter interface {
 	// Name returns unique name of the outputter.
-	// Lower cased struct name is recomended.
+	// Lower cased struct name is recommended.
 	Name() string
 
 	// Intialize the outputter.
