@@ -1,6 +1,8 @@
 ## What is this
 
-IO-DATA製CO2センサー [UD-CO2S](https://www.iodata.jp/product/tsushin/iot/ud-co2s/) から測定データを読み取り、MQTTや標準出力へJSONデータを出力するプログラムです。([Amazon.co.jp](https://amzn.to/3DX78Hi))
+IO-DATA製CO2センサー [UD-CO2S](https://www.iodata.jp/product/tsushin/iot/ud-co2s/) から測定データを読み取り、標準出力やMQTT等様々なデータレシーバへ出力するプログラムです。([Amazon.co.jp](https://amzn.to/3DX78Hi))
+
+データの出力先は比較的簡単に追加実装することができます。[^1]
 
 ## Install
 
@@ -35,17 +37,33 @@ C:\> chissoku.exe -q COM3 --tags Living
 ### with Docker image
 
 ```console
-$ docker run --rm -it --device /dev/ttyACM0:/dev/ttyACM0 ghcr.io/northeye/chissoku:latest /dev/ttyACM0 [<options>]
+$ docker run --rm -it --device /dev/ttyACM0:/dev/ttyACM0 ghcr.io/northeye/chissoku:latest [<options>] /dev/ttyACM0
 ```
-※ そもそもシングルバイナリなのでdockerで動かす意味はないかと思います。
 
-### Outputter
+**docker-compose.yml sample**
+
+```yaml
+version: '3.3'
+services:
+  chissoku:
+    container_name: chissoku
+    image: ghcr.io/northeye/chissoku:2.0
+    restart: always
+    devices:
+      - "/dev/ttyACM0:/dev/ttyACM0"
+    command: --output=mqtt --mqtt.address=tcp://mosquitto:1883 --mqtt.topic=co2/room1 --mqtt.client-id=chissoku-room1 --tags=Room1 /dev/ttyACM0
+    network_mode: bridge
+    environment:
+      TZ: 'Asia/Tokyo'
+```
+
+## Outputter
 
 `--output` オプションにより出力メソッドを指定することが可能です。<br>
 現在用意されているメソッドは `stdout`, `mqtt` で、複数指定することも可能です。
 
 ```console
-$ chissoku --output=stdout,mqtt --mqtt.address tcp://mosquitto:1883/ --mqtt.topic=sensors/co2 --mqtt.qos=2  /dev/ttyACM0
+$ chissoku --output=stdout,mqtt --mqtt.address tcp://mosquitto:1883/ --mqtt.topic=sensors/co2 --mqtt.qos=2 /dev/ttyACM0
 ```
 
 何も指定しなければデフォルトとして `stdout` が選択されます。
@@ -84,7 +102,7 @@ outputter のオプションは基本的に outputter の名前がプレフィ�
 
 MQTT メソッドがうまく動かなければ標準出力を [mosquitto_pub](https://mosquitto.org/man/mosquitto_pub-1.html) などに渡せばうまくいくかもしれません。
 
-### Global options
+## Global options
 
 |オプション|意味|
 |----|----|
@@ -95,3 +113,10 @@ MQTT メソッドがうまく動かなければ標準出力を [mosquitto_pub](h
 |-v, --version|バージョン情報を表示する|
 |-d, --debug|デバッグログの出力を行う|
 
+### CONTRIBUTING
+
+適当にPR送ってください。
+
+[^1]: `v2.0.0` から出力先の追加実装をしやすくするためプログラム設計を見直しました。<br>
+[output.Outputter](https://github.com/northeye/chissoku/blob/v2.0.0/output/outputter.go) インターフェースを実装した構造体を `Chissoku` 構造体メンバに[埋め込むだけ](https://github.com/northeye/chissoku/blob/v2.0.0/main.go#L44-L47)で追加できるようになりました。<br>
+既存の機能に影響のない範囲でPRを投げてくだされば対応します。
