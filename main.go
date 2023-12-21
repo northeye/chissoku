@@ -231,7 +231,6 @@ func (c *Chissoku) OutputterNames() (names string) {
 		return strings.Join(enum, ",")
 	}
 	c.outputters = make(map[string]output.Outputter)
-	//	fmt.Println(iface)
 	rv := reflect.Indirect(reflect.ValueOf(c))
 	rt := rv.Type()
 	for i := 0; i < rt.NumField(); i++ {
@@ -240,8 +239,7 @@ func (c *Chissoku) OutputterNames() (names string) {
 			continue
 		}
 		if value, ok := rv.Field(i).Addr().Interface().(output.Outputter); ok {
-			f := rt.Field(i)
-			name := strings.ToLower(f.Name)
+			name := value.Name()
 			enum = append(enum, name)
 			c.outputters[name] = value
 		}

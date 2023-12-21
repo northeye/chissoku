@@ -24,7 +24,7 @@ func (*Base) Close() {
 
 // Name sample implementation
 func (b *Base) Name() string {
-	return strings.ToLower(reflect.Indirect(reflect.ValueOf(b)).Type().Name())
+	return strings.ToLower(reflect.TypeOf(b).Elem().Name())
 }
 
 // Output sample implementation

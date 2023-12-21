@@ -92,7 +92,7 @@ func (m *Mqtt) Initialize(_ *options.Options) error {
 
 // Name outputter interface method
 func (m *Mqtt) Name() string {
-	return strings.ToLower(reflect.Indirect(reflect.ValueOf(m)).Type().Name())
+	return strings.ToLower(reflect.TypeOf(m).Elem().Name())
 }
 
 // Close outputter interface method

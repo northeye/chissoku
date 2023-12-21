@@ -46,7 +46,7 @@ func (s *Stdout) Initialize(_ *options.Options) error {
 
 // Name outputter interface method
 func (s *Stdout) Name() string {
-	return strings.ToLower(reflect.Indirect(reflect.ValueOf(s)).Type().Name())
+	return strings.ToLower(reflect.TypeOf(s).Elem().Name())
 }
 
 func (s *Stdout) write(d *types.Data) {
