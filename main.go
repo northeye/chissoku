@@ -15,9 +15,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alecthomas/kong"
 	"go.bug.st/serial"
 
-	"github.com/alecthomas/kong"
 	"github.com/northeye/chissoku/options"
 	"github.com/northeye/chissoku/output"
 	"github.com/northeye/chissoku/types"
@@ -27,8 +27,8 @@ func main() {
 	var c Chissoku
 	ctx := kong.Parse(&c,
 		kong.Name(ProgramName),
-		kong.Vars{"version": "v" + Version, "outputters": c.OutputterNames()},
-		kong.Description(`A CO2 sensor reader`),
+		kong.Vars{"version": "v" + Version, "outputters": strings.Join(c.registerOutputters(), ",")},
+		kong.Description(Description),
 		kong.Bind(&c.Options))
 	if err := ctx.Run(); err != nil {
 		slog.Error("chissoku.Run()", "error", err)
@@ -222,13 +222,12 @@ func (c *Chissoku) prepareDevice() (err error) {
 }
 
 // OutputterNames returns names of impleneted outputter
-func (c *Chissoku) OutputterNames() (names string) {
-	enum := []string{}
+func (c *Chissoku) registerOutputters() (names []string) {
 	if c.outputters != nil {
 		for k := range c.outputters {
-			enum = append(enum, k)
+			names = append(names, k)
 		}
-		return strings.Join(enum, ",")
+		return names
 	}
 	c.outputters = make(map[string]output.Outputter)
 	rv := reflect.Indirect(reflect.ValueOf(c))
@@ -240,9 +239,9 @@ func (c *Chissoku) OutputterNames() (names string) {
 		}
 		if value, ok := rv.Field(i).Addr().Interface().(output.Outputter); ok {
 			name := value.Name()
-			enum = append(enum, name)
+			names = append(names, name)
 			c.outputters[name] = value
 		}
 	}
-	return strings.Join(enum, ",")
+	return names
 }
