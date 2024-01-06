@@ -107,10 +107,10 @@ func (c *Chissoku) cleanup() {
 		slog.Debug("Closing Serial port")
 		// nolint: errcheck
 		c.port.Write([]byte(CommandSTP + "\r\n"))
+		time.Sleep(time.Millisecond * 100)
 		// nolint: errcheck
 		c.port.Close()
 	}
-	time.Sleep(time.Millisecond * 100)
 	for _, v := range c.Options.Output {
 		c.outputters[v].Close()
 	}
