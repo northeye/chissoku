@@ -10,10 +10,10 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"sync"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
-	"github.com/northeye/chissoku/options"
 	"github.com/northeye/chissoku/types"
 )
 
@@ -42,11 +42,16 @@ type Mqtt struct {
 
 	// mqtt mqtt Client interface
 	client mqtt.Client
+
+	// close
+	close func()
 }
 
 // Initialize initialize outputter
-func (m *Mqtt) Initialize(_ *options.Options) error {
-	m.Base.Initialize(nil)
+func (m *Mqtt) Initialize(ctx context.Context) error {
+	m.Base.Initialize(ctx)
+	ctx, m.cancel = context.WithCancel(ctx)
+
 	o := mqtt.NewClientOptions()
 	o.AddBroker(m.Address)
 	if m.ClientID != "" {
@@ -64,12 +69,24 @@ func (m *Mqtt) Initialize(_ *options.Options) error {
 		return t.Error()
 	}
 
+	m.close = sync.OnceFunc(func() {
+		deactivate(ctx, m)
+		close(m.r)
+		if m.client.IsConnected() {
+			m.client.Disconnect(1000)
+		}
+	})
+
 	go func() {
 		var cur *types.Data
-		m.publish(<-m.r) // publish first data
+		m.publish(<-m.r) // publish first data immediately
 		tick := time.NewTicker(time.Second * time.Duration(m.Interval))
 		for {
 			select {
+			case <-ctx.Done():
+				cur = nil
+				m.Close()
+				tick.Stop()
 			case <-tick.C:
 				if cur == nil {
 					continue
@@ -98,9 +115,7 @@ func (m *Mqtt) Name() string {
 // Close outputter interface method
 // clsoe the MQTT connection
 func (m *Mqtt) Close() {
-	if m.client.IsConnected() {
-		m.client.Disconnect(1000)
-	}
+	m.close()
 }
 
 func (m *Mqtt) publish(d *types.Data) {

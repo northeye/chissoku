@@ -2,10 +2,10 @@
 package output
 
 import (
+	"context"
 	"reflect"
 	"strings"
 
-	"github.com/northeye/chissoku/options"
 	"github.com/northeye/chissoku/types"
 )
 
@@ -16,6 +16,8 @@ type Base struct {
 
 	// receiver channel
 	r chan *types.Data
+	// cancel
+	cancel func()
 }
 
 // Close sample implementation
@@ -33,7 +35,7 @@ func (b *Base) Output(d *types.Data) {
 }
 
 // Initialize initialize outputter
-func (b *Base) Initialize(_ *options.Options) (_ error) {
+func (b *Base) Initialize(ctx context.Context) (_ error) {
 	b.r = make(chan *types.Data)
 	return
 }

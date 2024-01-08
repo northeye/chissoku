@@ -33,8 +33,8 @@ func (k *Kinesis) Name() string {
 }
 
 // Initialize initialize outputter
-func (k *Kinesis) Initialize(_ *options.Options) (_ error) {
-	k.Base.Initialize(nil)
+func (k *Kinesis) Initialize(ctx context.Context) (_ error) {
+	k.Base.Initialize(ctx)
 
 	// データレシーバの初期化ルーチンを書く
 
@@ -52,6 +52,29 @@ func (k *Kinesis) Initialize(_ *options.Options) (_ error) {
 
 `Output()` メソッドは `Base` に最低限で実装されているのでチャンネルで受け取る形で十分であれば実装する必要はありませんが、 `Interval` オプションが不要な場合など `Base` を埋め込まない場合は実装する必要があります。
 
+### context
+
+context には 以下のValueが埋め込まれています。
+
+| Key | Value | 説明 |
+|-----|----|----|
+|`options.ContextKeyOptions{}`|`*options.Options{}`|グローバルオプション構造体のポインタ|
+
+### outputter 側から自身を無効化する
+
+`Initialize(ctx)` で受け取った `ctx` と自身のポインタを引数として `output.deactivate()` に渡します
+
+```go
+func (o *foo) Initialize(ctx context.Context) error {
+	// ...
+	go func () {
+		defer deactivate(ctx, o)
+		for {
+			// ...
+		}
+	}()
+}
+```
 
 ### プログラム本体に追加する
 

@@ -13,6 +13,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/alecthomas/kong"
@@ -48,9 +49,15 @@ type Chissoku struct {
 
 	// available outputters
 	outputters map[string]output.Outputter
+	// active outputters
+	activeOutputters atomic.Value
 
 	// reader channel
 	rchan chan *types.Data
+	// deactivate outputter
+	dechan chan string
+	// cancel
+	cancel func()
 
 	// serial device
 	port serial.Port
@@ -71,21 +78,26 @@ func (c *Chissoku) AfterApply(opts *options.Options) error {
 	slog.SetDefault(slog.New(slog.NewJSONHandler(writer, &slog.HandlerOptions{Level: level})))
 
 	c.rchan = make(chan *types.Data)
+	c.dechan = make(chan string)
+	ctx := output.ContextWithDeactivateChannel(context.Background(), c.dechan)
+	ctx = context.WithValue(ctx, options.ContextKeyOptions{}, opts)
+	ctx, c.cancel = context.WithCancel(ctx)
 
-	enabled := opts.Output[:0]
-	for _, v := range opts.Output {
-		if o, ok := c.outputters[v]; ok {
-			if err := o.Initialize(opts); err != nil {
+	// initialize and filter outputters
+	a := make(map[string]output.Outputter, len(opts.Output))
+	for _, name := range opts.Output {
+		if o, ok := c.outputters[name]; ok {
+			if err := o.Initialize(ctx); err != nil {
 				slog.Error("Initialize outputter", "outputter", o.Name(), "error", err)
 				continue
 			}
-			enabled = append(enabled, v)
+			a[name] = o
 		}
 	}
-	opts.Output = enabled
-	if len(opts.Output) == 0 {
-		return fmt.Errorf("no outputters are avaiable")
+	if len(a) == 0 {
+		return fmt.Errorf("no active outputters are avaiable")
 	}
+	c.activeOutputters.Store(a)
 	return nil
 }
 
@@ -103,6 +115,7 @@ const (
 )
 
 func (c *Chissoku) cleanup() {
+	c.cancel()
 	if c.port != nil {
 		slog.Debug("Closing Serial port")
 		// nolint: errcheck
@@ -111,8 +124,9 @@ func (c *Chissoku) cleanup() {
 		// nolint: errcheck
 		c.port.Close()
 	}
-	for _, v := range c.Options.Output {
-		c.outputters[v].Close()
+
+	for _, o := range c.activeOutputters.Load().(map[string]output.Outputter) {
+		o.Close()
 	}
 }
 
@@ -175,18 +189,34 @@ func (c *Chissoku) readDevice() error {
 	}
 	if c.scanner.Err() != nil {
 		slog.Error("Scanner read error", "error", c.scanner.Err())
+		c.cleanup()
 		return c.scanner.Err()
 	}
 	return nil
 }
 
 func (c *Chissoku) dispatch() {
-	for d := range c.rchan {
-		for _, v := range c.Options.Output {
-			c.outputters[v].Output(d)
+	defer c.cleanup()
+	for {
+		select {
+		case deactivate := <-c.dechan:
+			a := c.activeOutputters.Load().(map[string]output.Outputter)
+			delete(a, deactivate)
+			if len(a) == 0 {
+				slog.Debug("No outputers are alive")
+				return
+			}
+			c.activeOutputters.Store(a)
+		case data, more := <-c.rchan:
+			if !more {
+				slog.Debug("Reader channel has ben closed")
+				return
+			}
+			for _, o := range c.activeOutputters.Load().(map[string]output.Outputter) {
+				o.Output(data)
+			}
 		}
 	}
-	slog.Debug("Reader channel has ben closed")
 }
 
 // initialize and prepare the device
