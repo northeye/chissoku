@@ -20,3 +20,6 @@ type Options struct {
 	// Debug
 	Debug bool `short:"d" help:"print debug log"`
 }
+
+// ContextKeyOptions context value key for global Options
+type ContextKeyOptions struct{}
