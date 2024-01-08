@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.1.0](https://github.com/northeye/chissoku/compare/v2.0.2...v2.1.0) (2024-01-08)
+
+
+### Features
+
+* **main:** manage active outputters ([24d5fed](https://github.com/northeye/chissoku/commit/24d5fed0df2ee97c301ea7eb1b792a35ff792670))
+* **output:** add `--stdout.iterations` option ([84a0074](https://github.com/northeye/chissoku/commit/84a00747a8fd22f8344b75d0a5323dfe69ad1edd))
+
+
+### Bug Fixes
+
+* **main:** wait 100msec after sending `STP` ([c123277](https://github.com/northeye/chissoku/commit/c123277abab8de9420b0c7c7f9606e306175b3e1))
+
 ## [2.0.2](https://github.com/northeye/chissoku/compare/v2.0.1...v2.0.2) (2023-12-20)
 
 

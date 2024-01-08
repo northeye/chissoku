@@ -7,4 +7,4 @@ const ProgramName = `chissoku`
 const Description = `A CO2 sensor reader`
 
 // Version - program versoin
-const Version = "2.0.2" // x-release-please-version
+const Version = "2.1.0" // x-release-please-version
