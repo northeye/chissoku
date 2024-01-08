@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/northeye/chissoku/types"
@@ -16,6 +17,10 @@ import (
 // Stdout outputter for Stdout
 type Stdout struct {
 	Base
+	Iterations int64 `help:"Inavtive on maximum iterations INT"`
+
+	// iteration counter
+	count atomic.Int64
 
 	// close
 	close func()
@@ -78,5 +83,14 @@ func (s *Stdout) write(d *types.Data) {
 		slog.Error("json.Marshal", "error", err, "outputter", s.Name())
 		return
 	}
-	fmt.Println(string(b))
+	if s.Iterations <= 0 {
+		fmt.Println(string(b))
+		return
+	}
+	if i := s.count.Add(1); i <= s.Iterations {
+		fmt.Println(string(b))
+		if i == s.Iterations {
+			s.cancel()
+		}
+	}
 }
