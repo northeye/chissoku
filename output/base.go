@@ -35,7 +35,7 @@ func (b *Base) Output(d *types.Data) {
 }
 
 // Initialize initialize outputter
-func (b *Base) Initialize(ctx context.Context) (_ error) {
-	b.r = make(chan *types.Data)
+func (b *Base) Initialize(_ context.Context) (_ error) {
+	b.r = make(chan *types.Data, 1)
 	return
 }
