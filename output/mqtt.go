@@ -79,27 +79,33 @@ func (m *Mqtt) Initialize(ctx context.Context) error {
 
 	go func() {
 		var cur *types.Data
-		m.publish(<-m.r) // publish first data immediately
-		tick := time.NewTicker(time.Second * time.Duration(m.Interval))
+		var tick *time.Ticker
+		var c <-chan time.Time
 		for {
 			select {
 			case <-ctx.Done():
 				cur = nil
-				m.Close()
 				tick.Stop()
-			case <-tick.C:
+				m.Close()
+			case <-c:
 				if cur == nil {
 					continue
 				}
 				m.publish(cur)
-				cur = nil // dismiss
+				cur = nil
 			case d, more := <-m.r:
 				if !more {
 					slog.Debug("reader channel has been closed", "outputter", m.Name())
 					tick.Stop()
 					return
+				} else if tick == nil {
+					// publish first data
+					m.publish(<-m.r)
+					tick = time.NewTicker(time.Second * time.Duration(m.Interval))
+					c = tick.C
+				} else {
+					cur = d
 				}
-				cur = d
 			}
 		}
 	}()

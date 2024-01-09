@@ -53,26 +53,33 @@ func (s *Stdout) Close() {
 
 func (s *Stdout) run(ctx context.Context) {
 	var cur *types.Data
-	s.write(<-s.r) // output first data immediately
-	tick := time.NewTicker(time.Second * time.Duration(s.Interval))
+	var tick *time.Ticker
+	var c <-chan time.Time
 	for {
 		select {
 		case <-ctx.Done():
 			cur = nil
 			tick.Stop()
 			s.Close()
-		case <-tick.C:
+		case <-c:
 			if cur == nil {
 				continue
 			}
 			s.write(cur)
-			cur = nil // dismiss
+			cur = nil
 		case d, more := <-s.r:
 			if !more {
 				slog.Debug("Output channel has been closed", "outputter", s.Name())
+				tick.Stop()
 				return
+			} else if tick == nil {
+				// output first data
+				s.write(d)
+				tick = time.NewTicker(time.Second * time.Duration(s.Interval))
+				c = tick.C
+			} else {
+				cur = d
 			}
-			cur = d
 		}
 	}
 }
