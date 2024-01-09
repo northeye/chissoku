@@ -14,8 +14,9 @@ type Outputter interface {
 	// Lower cased struct name is recommended.
 	Name() string
 
-	// Intialize the outputter.
+	// Intialize the outputter and run the receiver loop as own goroutine.
 	// When it returns non-nil error the outputter will be disabled.
+	// The context can be receive event of parent's termination through the `ctx.Done()`.
 	Initialize(context.Context) error
 
 	// Output the data.
@@ -23,6 +24,9 @@ type Outputter interface {
 	Output(*types.Data)
 
 	// Close cleanup the outputter.
+	// It's automatically invoked upon the parent's termination.
+	// If there is a need to call it from the child side, it should be implemented as atomically and maintain idempotence.
+	// So, `sync.OnceFunc` is useful.
 	Close()
 }
 
@@ -34,7 +38,7 @@ func ContextWithDeactivateChannel(ctx context.Context, c chan string) context.Co
 	return context.WithValue(ctx, contextKeyDeactivateOutputterChannel{}, c)
 }
 
-// deactivate deactivate an outputter
+// notify deactivation of an outputter to parent's main loop.
 func deactivate(ctx context.Context, o Outputter) {
 	if c, ok := ctx.Value(contextKeyDeactivateOutputterChannel{}).(chan string); ok {
 		slog.Debug("Deactivate", "outputter", o.Name())
