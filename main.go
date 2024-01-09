@@ -13,6 +13,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -63,6 +64,9 @@ type Chissoku struct {
 	port serial.Port
 	// serial scanner
 	scanner *bufio.Scanner
+
+	// cleanup
+	cleanup func()
 }
 
 // AfterApply kong hook
@@ -98,6 +102,20 @@ func (c *Chissoku) AfterApply(opts *options.Options) error {
 		return fmt.Errorf("no active outputters are avaiable")
 	}
 	c.activeOutputters.Store(a)
+
+	c.cleanup = sync.OnceFunc(func() {
+		// exit the program cleanly
+		c.cancel()
+		for _, o := range c.activeOutputters.Load().(map[string]output.Outputter) {
+			o.Close()
+		}
+		if c.port != nil {
+			slog.Debug("Sending command", "command", CommandSTP)
+			// nolint: errcheck
+			c.port.Write([]byte(CommandSTP + "\r\n"))
+		}
+	})
+
 	return nil
 }
 
@@ -113,22 +131,6 @@ const (
 	// ResponseNG the NG response
 	ResponseNG string = `NG`
 )
-
-func (c *Chissoku) cleanup() {
-	c.cancel()
-	if c.port != nil {
-		slog.Debug("Closing Serial port")
-		// nolint: errcheck
-		c.port.Write([]byte(CommandSTP + "\r\n"))
-		time.Sleep(time.Millisecond * 100)
-		// nolint: errcheck
-		c.port.Close()
-	}
-
-	for _, o := range c.activeOutputters.Load().(map[string]output.Outputter) {
-		o.Close()
-	}
-}
 
 // Run run the program
 func (c *Chissoku) Run() (err error) {
@@ -159,13 +161,21 @@ func (c *Chissoku) Run() (err error) {
 	go func() {
 		<-sigch
 		c.cleanup()
+		<-time.After(time.Second)
+		slog.Error("No response from device")
 		os.Exit(128)
 	}()
 
 	// main
 	go c.dispatch()
 
-	return c.readDevice()
+	if err = c.readDevice(); err != nil {
+		slog.Error("Error on readDevice", "err", err)
+	}
+	slog.Debug("Close Serial port")
+	c.port.Close()
+
+	return err
 }
 
 // readDevice read data from serial device
@@ -187,16 +197,15 @@ func (c *Chissoku) readDevice() error {
 			slog.Warn("Read unmatched string", "str", text)
 		}
 	}
-	if c.scanner.Err() != nil {
-		slog.Error("Scanner read error", "error", c.scanner.Err())
+	if err := c.scanner.Err(); err != nil {
+		slog.Error("Scanner read error", "error", err)
 		c.cleanup()
-		return c.scanner.Err()
+		return err
 	}
 	return nil
 }
 
 func (c *Chissoku) dispatch() {
-	defer c.cleanup()
 	for {
 		select {
 		case deactivate := <-c.dechan:
@@ -204,6 +213,7 @@ func (c *Chissoku) dispatch() {
 			delete(a, deactivate)
 			if len(a) == 0 {
 				slog.Debug("No outputers are alive")
+				c.cleanup()
 				return
 			}
 			c.activeOutputters.Store(a)
