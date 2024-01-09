@@ -52,30 +52,6 @@ func (k *Kinesis) Initialize(ctx context.Context) (_ error) {
 
 `Output()` メソッドは `Base` に最低限で実装されているのでチャンネルで受け取る形で十分であれば実装する必要はありませんが、 `Interval` オプションが不要な場合など `Base` を埋め込まない場合は実装する必要があります。
 
-### context
-
-context には 以下のValueが埋め込まれています。
-
-| Key | Value | 説明 |
-|-----|----|----|
-|`options.ContextKeyOptions{}`|`*options.Options{}`|グローバルオプション構造体のポインタ|
-
-### outputter 側から自身を無効化する
-
-`Initialize(ctx)` で受け取った `ctx` と自身のポインタを引数として `output.deactivate()` に渡します
-
-```go
-func (o *foo) Initialize(ctx context.Context) error {
-	// ...
-	go func () {
-		defer deactivate(ctx, o)
-		for {
-			// ...
-		}
-	}()
-}
-```
-
 ### プログラム本体に追加する
 
 `main.go` 内の `Chissoku` 構造体メンバに追加します。
@@ -106,6 +82,55 @@ Kinesis Output:
   --kinesis.access-key-id=STRING        AWS Access Key ID ($AWS_ACCESS_KEY_ID)
   --kinesis.secret-access-key=STRING    AWS Secret Secret Key ($AWS_SECRET_ACCESS_KEY)
 ```
+
+
+## context
+
+`ctx context.Context` には 以下のValueが埋め込まれています。
+
+| Key | Value | 説明 |
+|-----|----|----|
+|`options.ContextKeyOptions{}`|`*options.Options{}`|グローバルオプション構造体のポインタ|
+
+### メインループの終了を受け取る
+
+`ctx.Done()` を受信することによりメインループの終了を知ることができます。
+
+### outputter 側から自身を無効化する
+
+`ctx` と自身のポインタを引数として `output.deactivate()` に渡すことで、メインループから自身を対象外にすることができます。<br>
+その際、メインループ側から `Close()` は呼ばれません。<br>
+ただし、メインループが終了する場合は全ての `Outputter` に `ctx.Done()` を通じて通知し、`outputter.Close()` を呼びます。<br>
+すなわち、 `Close()` メソッドはアトミック且つ冪等に実装する必要があります。<br>
+`sync` パッケージの `sync.OnceFunc` や `sync.Once` を使うと便利です。
+
+```go
+func (o *foo) Initialize(ctx context.Context) error {
+	o.close = sync.OnceFunc(func () {
+		// deactivate foo
+		deactivate(ctx, o)
+		// close and release something...
+		close(o.r)
+	})
+
+	// receiver loop
+	go func () {
+		for {
+			select {
+			case <-ctx.Done():
+				o.Close()
+			case d := <-o.r
+				// ...
+			}
+		}
+	}()
+}
+
+func (o *foo) Close() {
+	o.close()
+}
+```
+
 
 以上です。
 
