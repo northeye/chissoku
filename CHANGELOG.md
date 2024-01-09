@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.1.1](https://github.com/northeye/chissoku/compare/v2.1.0...v2.1.1) (2024-01-09)
+
+
+### Bug Fixes
+
+* **main:** termination sequence. ([b679d44](https://github.com/northeye/chissoku/commit/b679d4485ac6e6fed56cb420aceda79255cd03c8))
+* **output:** possibility of deadlock ([4e3718f](https://github.com/northeye/chissoku/commit/4e3718f17b08b1a31fead098abd3fd5c0211f7d0))
+* **output:** update interface comments ([229662c](https://github.com/northeye/chissoku/commit/229662c46dad8b897e927f91cc5a0596cd3ad8d0))
+
 ## [2.1.0](https://github.com/northeye/chissoku/compare/v2.0.2...v2.1.0) (2024-01-08)
 
 
