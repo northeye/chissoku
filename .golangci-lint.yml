@@ -2,8 +2,6 @@ run:
   modules-download-mode: readonly
   timeout: 10m
   tests: true
-  skip-files:
-  - ".*_generated\\.go$"
 
 linters:
   enable:
@@ -17,6 +15,7 @@ linters:
     - whitespace
     - gosimple
     - errorlint
+    - gci
     # - wastedassign
 linters-settings:
   goconst:
@@ -36,6 +35,11 @@ linters-settings:
       - (go.bug.st/serial.Port).Write
       - (go.bug.st/serial.Port).SetReadTimeout
       - (*github.com/northeye/chissoku/output.Base).Initialize
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(github.com/northeye/chissoku)
 
 issues:
   exclude-rules:

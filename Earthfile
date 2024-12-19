@@ -1,12 +1,13 @@
-VERSION --try 0.7
-FROM golang:1.21
+VERSION --try 0.8
+FROM golang:1.23
 
 ENV GOPATH=/go
 ENV PATH=$GOPATH/bin:$PATH
+ARG GOLANGCI_LINT_VERSION=v1.64.5
 
 deps:
     RUN apt-get update && apt-get install -y --no-install-recommends p7zip
-    RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
+    RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin $GOLANGCI_LINT_VERSION
     SAVE IMAGE --cache-hint
 
 lint:
@@ -14,7 +15,7 @@ lint:
     WORKDIR /workspace/lint
     COPY . .
     TRY
-        RUN --no-cache golangci-lint run -c ./.golangci-lint.yml --out-format junit-xml > lint-report.xml
+        RUN --no-cache golangci-lint run -c ./.golangci-lint.yml --out-format junit-xml | tee lint-report.xml
     FINALLY
         SAVE ARTIFACT lint-report.xml AS LOCAL lint-report.xml
     END
