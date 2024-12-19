@@ -83,7 +83,6 @@ Kinesis Output:
   --kinesis.secret-access-key=STRING    AWS Secret Secret Key ($AWS_SECRET_ACCESS_KEY)
 ```
 
-
 ## context
 
 `ctx context.Context` には 以下のValueが埋め込まれています。
@@ -98,9 +97,9 @@ Kinesis Output:
 
 ### outputter 側から自身を無効化する
 
-`ctx` と自身のポインタを引数として `output.deactivate()` に渡すことで、メインループから自身を対象外にすることができます。<br>
+`ctx` と自身のポインタを引数として `output.deactivate()` に渡すことで、メインループの出力対象から除外にすることができます。<br>
 その際、メインループ側から `Close()` は呼ばれません。<br>
-ただし、メインループが終了する場合は全ての `Outputter` に `ctx.Done()` を通じて通知し、`outputter.Close()` を呼びます。<br>
+ただし、メインループが終了する場合は稼働中の全ての `Outputter` に `ctx.Done()` を通じて通知し、`outputter.Close()` を呼びます。<br>
 すなわち、 `Close()` メソッドはアトミック且つ冪等に実装する必要があります。<br>
 `sync` パッケージの `sync.OnceFunc` や `sync.Once` を使うと便利です。
 
@@ -130,7 +129,6 @@ func (o *foo) Close() {
 	o.close()
 }
 ```
-
 
 以上です。
 
