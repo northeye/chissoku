@@ -1,6 +1,6 @@
 {
     "name": "chissoku",
-    "service": "chissoku",
+    "service": "devcontainer",
     "dockerComposeFile": [
         "docker-compose.yml"
     ],
@@ -21,7 +21,7 @@
             //exludes fies & folders for watcher service
             "files.watcherExclude": {
                 "**/.git/objects/**": true,
-                "**/.git/subtree-cache/**": true,
+                "**/.git/subtree-cache/**": true
             },
             "go.formatTool": "gofumpt",
             "go.lintTool": "revive",
@@ -50,7 +50,10 @@
                 "ms-ceintl.vscode-language-pack-ja",
                 "GitHub.vscode-pull-request-github",
                 "eamodio.gitlens",
-                "mohsen1.prettify-json"
+                "mohsen1.prettify-json",
+                "earthly.earthfile-syntax-highlighting",
+                "glehmann.earthlyls",
+                "github.vscode-github-actions"
             ]
         }
     },
