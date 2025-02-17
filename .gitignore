@@ -1,5 +1,5 @@
-chissoku
-chissoku.exe
-release/
-*.xml
 .vscode/
+./chissoku
+./chissoku.exe
+./release/
+./*.xml
