@@ -5,7 +5,7 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/northeye/chissoku/types"
+	"github.com/northeye/chissoku/internal/types"
 )
 
 // Outputter the outputter interface

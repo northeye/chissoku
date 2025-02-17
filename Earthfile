@@ -1,6 +1,5 @@
 VERSION --try 0.8
-FROM golang:1.23
-
+FROM golang:1.24
 ENV GOPATH=/go
 ENV PATH=$GOPATH/bin:$PATH
 ARG GOLANGCI_LINT_VERSION=v1.64.5
@@ -28,12 +27,12 @@ build:
     COPY go.mod go.sum .
     RUN go mod download
     COPY . .
-    RUN CGO_ENABLED=0 GOOS=$TARGET_OS GOARCH=$TARGET_ARCH go build ./
+    RUN CGO_ENABLED=0 GOOS=$TARGET_OS GOARCH=$TARGET_ARCH go build ./cmd/chissoku
     RUN rm -rf release && mkdir -p release
     IF [ "$TARGET_OS" = "windows" ]
-        RUN 7zr a release/chissoku-$(go run . -v)-windows-$TARGET_ARCH.7z chissoku.exe
+        RUN 7zr a release/chissoku-$(go run ./cmd/chissoku -v)-windows-$TARGET_ARCH.7z chissoku.exe
     ELSE
-        RUN tar -czf release/chissoku-$(go run . -v)-$TARGET_OS-$TARGET_ARCH.tar.gz chissoku
+        RUN tar -czf release/chissoku-$(go run ./cmd/chissoku -v)-$TARGET_OS-$TARGET_ARCH.tar.gz chissoku
     END
     SAVE ARTIFACT release/* release/
 

@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/northeye/chissoku/types"
+	"github.com/northeye/chissoku/internal/types"
 )
 
 // Base outputter base struct

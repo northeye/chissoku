@@ -1,4 +1,4 @@
-// Package types defines some data types
+// Package types defines auxiliary types
 package types
 
 import (

@@ -34,7 +34,7 @@ linters-settings:
     exclude-functions:
       - (go.bug.st/serial.Port).Write
       - (go.bug.st/serial.Port).SetReadTimeout
-      - (*github.com/northeye/chissoku/output.Base).Initialize
+      - (*github.com/northeye/chissoku/internal/output.Base).Initialize
   gci:
     sections:
       - standard

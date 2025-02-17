@@ -15,7 +15,7 @@ import (
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 
-	"github.com/northeye/chissoku/types"
+	"github.com/northeye/chissoku/internal/types"
 )
 
 // Mqtt MQTT Outputter

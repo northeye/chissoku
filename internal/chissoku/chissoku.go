@@ -1,5 +1,5 @@
-// Package chissoku implements main chissoku program
-package main
+// Package chissioku is core part of chissoku
+package chissoku
 
 import (
 	"bufio"
@@ -17,26 +17,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/alecthomas/kong"
 	"go.bug.st/serial"
 
-	"github.com/northeye/chissoku/options"
-	"github.com/northeye/chissoku/output"
-	"github.com/northeye/chissoku/types"
+	"github.com/northeye/chissoku/cmd/chissoku/options"
+	"github.com/northeye/chissoku/internal/output"
+	"github.com/northeye/chissoku/internal/types"
 )
-
-func main() {
-	var c Chissoku
-	ctx := kong.Parse(&c,
-		kong.Name(ProgramName),
-		kong.Vars{"version": "v" + Version, "outputters": strings.Join(c.registerOutputters(), ",")},
-		kong.Description(Description),
-		kong.Bind(&c.Options))
-	if err := ctx.Run(); err != nil {
-		slog.Error("chissoku.Run()", "error", err)
-		os.Exit(1)
-	}
-}
 
 // Chissoku main program
 type Chissoku struct {
@@ -134,7 +120,7 @@ const (
 
 // Run run the program
 func (c *Chissoku) Run() (err error) {
-	slog.Debug("Start", "name", ProgramName, "version", Version)
+	slog.Debug("Start chissoku", "name", programName, "version", version)
 
 	opts := &c.Options
 
@@ -261,8 +247,8 @@ func (c *Chissoku) prepareDevice() (err error) {
 	return
 }
 
-// OutputterNames returns names of impleneted outputter
-func (c *Chissoku) registerOutputters() (names []string) {
+// RegisterOutputters returns names of impleneted outputter
+func (c *Chissoku) RegisterOutputters() (names []string) {
 	if c.outputters != nil {
 		for k := range c.outputters {
 			names = append(names, k)
