@@ -1,14 +1,13 @@
 name: chissoku
-version: '3.3'
-
 services:
-  chissoku:
+  devcontainer:
     hostname: chissoku
     build:
       context: .
     environment:
       - LANG=ja_JP.UTF-8
     volumes:
+      - /etc/localtime:/etc/localtime:ro
       - ../:/work/chissoku
       - home:/home/vscode
     command: sleep infinity

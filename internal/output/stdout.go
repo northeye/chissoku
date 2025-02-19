@@ -11,7 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/northeye/chissoku/types"
+	"github.com/northeye/chissoku/internal/types"
 )
 
 // Stdout outputter for Stdout

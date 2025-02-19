@@ -18,7 +18,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           release-type: 'go'
-          extra-files: version.go
+          extra-files: internal/chissoku/version.go
       - uses: actions/checkout@v4
       - name: tag major and minor versions
         if: ${{ steps.release.outputs.release_created }}

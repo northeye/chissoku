@@ -1,6 +1,6 @@
 {
     "name": "chissoku",
-    "service": "chissoku",
+    "service": "devcontainer",
     "dockerComposeFile": [
         "docker-compose.yml"
     ],
@@ -8,7 +8,7 @@
     "remoteEnv": {
         "GOPATH": "/home/vscode/go"
     },
-    "postCreateCommand": "go install mvdan.cc/gofumpt@latest && go install gotest.tools/gotestsum@latest",
+    "postCreateCommand": "go install mvdan.cc/gofumpt@latest && go install gotest.tools/gotestsum@latest && go install github.com/daixiang0/gci@latest",
     // Set *default* container specific settings.json values on container create.
     "customizations": {
         "settings": {
@@ -21,9 +21,9 @@
             //exludes fies & folders for watcher service
             "files.watcherExclude": {
                 "**/.git/objects/**": true,
-                "**/.git/subtree-cache/**": true,
+                "**/.git/subtree-cache/**": true
             },
-            "go.formatTool": "goimports",
+            "go.formatTool": "gofumpt",
             "go.lintTool": "revive",
             "go.testFlags": [
                 "-race",
@@ -36,26 +36,30 @@
                 // you can optionally turn on these features for more colors
                 // see https://go.dev/issue/45753 and https://go.dev/issue/45792
                 "ui.noSemanticString": true, // delegates string syntax highlighting to vscode
-                "ui.noSemanticNumber": true // delegates number syntax highlighting to vscode
+                "ui.noSemanticNumber": true, // delegates number syntax highlighting to vscode
+                "formatting.gofumpt": true,
+                "formatting.local": "github.com/northeye/chissoku"
             },
             "terminal.integrated.defaultProfile.linux": "zsh"
         },
         "vscode": {
             "extensions": [
                 "golang.go",
-                "2gua.rainbow-brackets",
                 "cobaltblu27.rainbow-highlighter",
                 "oderwat.indent-rainbow",
                 "ms-ceintl.vscode-language-pack-ja",
                 "GitHub.vscode-pull-request-github",
                 "eamodio.gitlens",
-                "mohsen1.prettify-json"
+                "mohsen1.prettify-json",
+                "earthly.earthfile-syntax-highlighting",
+                "glehmann.earthlyls",
+                "github.vscode-github-actions"
             ]
         }
     },
     "features": {
         "ghcr.io/devcontainers/features/go:1": {},
-        "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+        "ghcr.io/devcontainers/features/docker-in-docker:2.12.0": {},
         "ghcr.io/rocker-org/devcontainer-features/apt-packages:1": {
             "packages": "lv,zsh,vim"
         }
