@@ -1,5 +1,4 @@
-// Package options implements global options
-package options
+package chissoku
 
 import (
 	"github.com/alecthomas/kong"
@@ -15,11 +14,10 @@ type Options struct {
 	Quiet bool `short:"q" help:"don't output any process logs to STDERR"`
 	// Tags tagging data
 	Tags []string `short:"t" help:"Add tags field to json output, comma-separated strings ex: 'one,two,three'"`
+        // Maps add json map
+        Maps map[string]string `short:"m" help:"Add json object to output. ex: --maps=key1=val1;key2=val2"`
 	// Version
 	Version kong.VersionFlag `short:"v" help:"show program version"`
 	// Debug
 	Debug bool `short:"d" help:"print debug log"`
 }
-
-// ContextKeyOptions context value key for global Options
-type ContextKeyOptions struct{}

@@ -19,7 +19,6 @@ import (
 
 	"go.bug.st/serial"
 
-	"github.com/northeye/chissoku/cmd/chissoku/options"
 	"github.com/northeye/chissoku/internal/output"
 	"github.com/northeye/chissoku/internal/types"
 )
@@ -27,7 +26,7 @@ import (
 // Chissoku main program
 type Chissoku struct {
 	// Options
-	Options options.Options `embed:""`
+	Options Options `embed:""`
 
 	// Stdout output
 	output.Stdout `prefix:"stdout." group:"Stdout Output:"`
@@ -56,7 +55,7 @@ type Chissoku struct {
 }
 
 // AfterApply kong hook
-func (c *Chissoku) AfterApply(opts *options.Options) error {
+func (c *Chissoku) AfterApply(opts *Options) error {
 	var writer io.Writer = os.Stderr
 	level := slog.LevelInfo
 	if opts.Debug {
@@ -70,7 +69,6 @@ func (c *Chissoku) AfterApply(opts *options.Options) error {
 	c.rchan = make(chan *types.Data)
 	c.dechan = make(chan string)
 	ctx := output.ContextWithDeactivateChannel(context.Background(), c.dechan)
-	ctx = context.WithValue(ctx, options.ContextKeyOptions{}, opts)
 	ctx, c.cancel = context.WithCancel(ctx)
 
 	// initialize and filter outputters
