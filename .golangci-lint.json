@@ -67,8 +67,7 @@
       "errcheck": {
         "exclude-functions": [
           "(go.bug.st/serial.Port).Write",
-          "(go.bug.st/serial.Port).SetReadTimeout",
-          "(*github.com/northeye/chissoku/internal/output.Base).Initialize"
+          "(go.bug.st/serial.Port).SetReadTimeout"
         ]
       },
       "goconst": {
