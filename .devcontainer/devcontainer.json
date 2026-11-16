@@ -8,7 +8,7 @@
     "remoteEnv": {
         "GOPATH": "/home/vscode/go"
     },
-    "postCreateCommand": "go install mvdan.cc/gofumpt@latest && go install gotest.tools/gotestsum@latest && go install github.com/daixiang0/gci@latest",
+    "postCreateCommand": "mise upgrade && go install mvdan.cc/gofumpt@latest && go install gotest.tools/gotestsum@latest && go install github.com/daixiang0/gci@latest",
     // Set *default* container specific settings.json values on container create.
     "customizations": {
         "settings": {
@@ -53,16 +53,13 @@
                 "mohsen1.prettify-json",
                 "earthly.earthfile-syntax-highlighting",
                 "glehmann.earthlyls",
-                "github.vscode-github-actions"
+                "github.vscode-github-actions",
+                "hverlin.mise-vscode"
             ]
         }
     },
     "features": {
-        "ghcr.io/devcontainers/features/go:1": {},
-        "ghcr.io/devcontainers/features/docker-in-docker:2.12.0": {},
-        "ghcr.io/rocker-org/devcontainer-features/apt-packages:1": {
-            "packages": "lv,zsh,vim"
-        }
+        //  "ghcr.io/devcontainers/features/docker-in-docker:2.16.1": {}
     },
     // Use 'forwardPorts' to make a list of ports inside the container available locally.
     // "forwardPorts": [],
