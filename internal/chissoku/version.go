@@ -3,7 +3,7 @@ package chissoku
 const (
 	programName = `chissoku`
 	description = `A CO2 sensor reader`
-	version     = "2.2.0" // x-release-please-version
+	version     = "2.2.1" // x-release-please-version
 )
 
 // ProgramName returns the program name
