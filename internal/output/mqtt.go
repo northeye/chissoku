@@ -27,6 +27,8 @@ type Mqtt struct {
 	Topic string `help:"MQTT Topic name to publish"`
 	// MQTT Qos
 	Qos int `help:"MQTT Topic name to publish. default: '0'"`
+	// MQTT Retain
+	Retain bool `help:"MQTT Retain flag. default: 'false'" default:"false"`
 	// SSL CA File
 	CAFile string `name:"ssl-cafile" help:"Root CA Cert file for SSL" type:"existingfile"`
 	// SSL Cert
@@ -123,7 +125,7 @@ func (m *Mqtt) Close() {
 }
 
 func (m *Mqtt) publish(b []byte) {
-	token := m.client.Publish(m.Topic, byte(m.Qos), false, b)
+	token := m.client.Publish(m.Topic, byte(m.Qos), m.Retain, b)
 	slog.Debug("Publish data", "outputter", m.Name(), "token", token)
 }
 
