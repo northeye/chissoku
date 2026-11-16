@@ -8,6 +8,9 @@ on:
       - "v*.*.*"
       - "v*.*"
       - "v*"
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
