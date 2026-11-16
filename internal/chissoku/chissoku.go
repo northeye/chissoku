@@ -178,7 +178,11 @@ func (c *Chissoku) readDevice() error {
 			b, _ := json.Marshal(d)
 			if len(c.Options.Maps) > 0 {
 				var raw types.RawData
-				json.Unmarshal(b, &raw)
+				err := json.Unmarshal(b, &raw)
+				if err != nil {
+					slog.Error("Failed to unmarshal data", "error", err)
+					return err
+				}
 				for k, v := range c.Options.Maps {
 					raw[k] = v
 				}
