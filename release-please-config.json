@@ -1,7 +1,7 @@
 {
   "packages": {
     ".": {
-      "release-type": "gp",
+      "release-type": "go",
       "extra-files": [
         "internal/chissoku/version.go"
       ]
