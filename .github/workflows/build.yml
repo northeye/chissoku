@@ -12,75 +12,45 @@ on:
 jobs:
   build:
     permissions:
-      contents: write
-      packages: write
+      contents: read
     strategy:
       matrix:
         target_os: ["linux", "darwin", "windows"]
         target_arch: ["amd64", "arm64"]
     runs-on: ubuntu-latest
-    env:
-      REMOTE_CACHE: "ghcr.io/${{ github.repository_owner }}/earthly-cache"
-      EARTHLY_MAX_REMOTE_CACHE: true
-      EARTHLY_PUSH: true
-      EARTHLY_CI: true
     steps:
-      - name: Login to ghcr.io
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Checkout
-        uses: actions/checkout@v4
-      - name: Earthly
-        uses: earthly/actions-setup@v1
-      - name: +build ${{ matrix.target_os }}/${{ matrix.target_arch }}
-        run: |
-          export EARTHLY_REMOTE_CACHE="${{ env.REMOTE_CACHE }}:$(basename ${{ github.repository }})"
-          earthly +build --TARGET_OS=${{ matrix.target_os }} --TARGET_ARCH=${{ matrix.target_arch }}
+        uses: actions/checkout@v7
+
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: "1.27.x"
+          cache: true
+
+      - name: Build ${{ matrix.target_os }}/${{ matrix.target_arch }}
+        env:
+          GOOS: ${{ matrix.target_os }}
+          GOARCH: ${{ matrix.target_arch }}
+          CGO_ENABLED: "0"
+        run: go build ./cmd/chissoku
 
   lint:
     permissions:
-      actions: write
-      contents: write
-      packages: write
+      contents: read
     runs-on: ubuntu-latest
-    env:
-      REMOTE_CACHE: "ghcr.io/${{ github.repository_owner }}/earthly-cache"
-      EARTHLY_MAX_REMOTE_CACHE: true
-      EARTHLY_CI: true
-      EARTHLY_PUSH: true
     steps:
-#      - name: Login to ghcr.io
-#        uses: docker/login-action@v2
-#        with:
-#          registry: ghcr.io
-#          username: ${{ github.repository_owner }}
-#          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Checkout
-        uses: actions/checkout@v4
-      - name: setup-go
-        uses: actions/setup-go@v5
+        uses: actions/checkout@v7
+
+      - name: Setup Go
+        uses: actions/setup-go@v7
         with:
-          go-version: '1.24'
+          go-version: "1.27.x"
+          cache: true
+
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v9
         with:
-          args: "-c ./.golangci-lint.yml"
-          skip-pkg-cache: true
-
-
-#      - name: Setup Earthly
-#        uses: earthly/actions-setup@v1
-#      - name: earthly +lint
-#        run: |
-#          export EARTHLY_REMOTE_CACHE="${{ env.REMOTE_CACHE }}:$(basename ${{ github.repository }})"
-#          earthly -a +lint/lint-report.xml ./lint-report.xml
-#      - name: Report
-#        if: always()
-#        uses: mikepenz/action-junit-report@v3
-#        with:
-#          report_paths: lint-report.xml
-#          annotate_only: true
-#          detailed_summary: true
+          args: "-c ./.golangci-lint.json"
+          skip-cache: true
