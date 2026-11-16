@@ -5,8 +5,6 @@ import (
 	"context"
 	"reflect"
 	"strings"
-
-	"github.com/northeye/chissoku/internal/types"
 )
 
 // Base outputter base struct
@@ -15,7 +13,7 @@ type Base struct {
 	Interval int `long:"interval" help:"interval (second) for output. default: '60'" default:"60"`
 
 	// receiver channel
-	r chan *types.Data
+	r chan []byte
 	// cancel
 	cancel func()
 }
@@ -30,12 +28,12 @@ func (b *Base) Name() string {
 }
 
 // Output sample implementation
-func (b *Base) Output(d *types.Data) {
+func (b *Base) Output(d []byte) {
 	b.r <- d
 }
 
 // Initialize initialize outputter
 func (b *Base) Initialize(_ context.Context) (_ error) {
-	b.r = make(chan *types.Data, 1)
+	b.r = make(chan []byte)
 	return
 }

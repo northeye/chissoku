@@ -4,8 +4,6 @@ package output
 import (
 	"context"
 	"log/slog"
-
-	"github.com/northeye/chissoku/internal/types"
 )
 
 // Outputter the outputter interface
@@ -21,7 +19,7 @@ type Outputter interface {
 
 	// Output the data.
 	// This method must be non-blocking and light-weight.
-	Output(*types.Data)
+	Output([]byte)
 
 	// Close cleanup the outputter.
 	// It's automatically invoked upon the parent's termination.

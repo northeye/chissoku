@@ -4,6 +4,7 @@ package chissoku
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
@@ -39,7 +40,7 @@ type Chissoku struct {
 	activeOutputters atomic.Value
 
 	// reader channel
-	rchan chan *types.Data
+	rchan chan []byte
 	// deactivate outputter
 	dechan chan string
 	// cancel
@@ -66,7 +67,7 @@ func (c *Chissoku) AfterApply(opts *Options) error {
 	}
 	slog.SetDefault(slog.New(slog.NewJSONHandler(writer, &slog.HandlerOptions{Level: level})))
 
-	c.rchan = make(chan *types.Data)
+	c.rchan = make(chan []byte)
 	c.dechan = make(chan string)
 	ctx := output.ContextWithDeactivateChannel(context.Background(), c.dechan)
 	ctx, c.cancel = context.WithCancel(ctx)
@@ -174,7 +175,16 @@ func (c *Chissoku) readDevice() error {
 			d.CO2, _ = strconv.ParseInt(m[0][1], 10, 64)
 			d.Humidity, _ = strconv.ParseFloat(m[0][2], 64)
 			d.Temperature, _ = strconv.ParseFloat(m[0][3], 64)
-			c.rchan <- d
+			b, _ := json.Marshal(d)
+			if len(c.Options.Maps) > 0 {
+				var raw types.RawData
+				json.Unmarshal(b, &raw)
+				for k, v := range c.Options.Maps {
+					raw[k] = v
+				}
+				b, _ = json.Marshal(raw)
+			}
+			c.rchan <- b
 		} else if text[:6] == `OK STP` {
 			return nil // exit 0
 		} else {

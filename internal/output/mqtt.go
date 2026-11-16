@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/json"
 	"log/slog"
 	"os"
 	"reflect"
@@ -14,8 +13,6 @@ import (
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
-
-	"github.com/northeye/chissoku/internal/types"
 )
 
 // Mqtt MQTT Outputter
@@ -79,7 +76,7 @@ func (m *Mqtt) Initialize(ctx context.Context) error {
 	})
 
 	go func() {
-		var cur *types.Data
+		var cur []byte
 		var tick *time.Ticker
 		var c <-chan time.Time
 		for {
@@ -125,12 +122,7 @@ func (m *Mqtt) Close() {
 	m.close()
 }
 
-func (m *Mqtt) publish(d *types.Data) {
-	b, err := json.Marshal(d)
-	if err != nil {
-		slog.Error("json.Marshal", "error", err, "outputter", m.Name())
-		return
-	}
+func (m *Mqtt) publish(b []byte) {
 	token := m.client.Publish(m.Topic, byte(m.Qos), false, b)
 	slog.Debug("Publish data", "outputter", m.Name(), "token", token)
 }
