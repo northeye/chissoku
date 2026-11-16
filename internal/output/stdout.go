@@ -2,16 +2,13 @@ package output
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"log/slog"
+	"os"
 	"reflect"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
-
-	"github.com/northeye/chissoku/types"
 )
 
 // Stdout outputter for Stdout
@@ -52,7 +49,7 @@ func (s *Stdout) Close() {
 }
 
 func (s *Stdout) run(ctx context.Context) {
-	var cur *types.Data
+	var cur []byte
 	var tick *time.Ticker
 	var c <-chan time.Time
 	for {
@@ -84,18 +81,15 @@ func (s *Stdout) run(ctx context.Context) {
 	}
 }
 
-func (s *Stdout) write(d *types.Data) {
-	b, err := json.Marshal(d)
-	if err != nil {
-		slog.Error("json.Marshal", "error", err, "outputter", s.Name())
-		return
-	}
+func (s *Stdout) write(b []byte) {
 	if s.Iterations <= 0 {
-		fmt.Println(string(b))
+		os.Stdout.Write(b)
+		os.Stdout.WriteString("\n")
 		return
 	}
 	if i := s.count.Add(1); i <= s.Iterations {
-		fmt.Println(string(b))
+		os.Stdout.Write(b)
+		os.Stdout.WriteString("\n")
 		if i == s.Iterations {
 			s.cancel()
 		}

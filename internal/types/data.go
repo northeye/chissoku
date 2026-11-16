@@ -1,4 +1,4 @@
-// Package types defines some data types
+// Package types defines auxiliary types
 package types
 
 import (
@@ -25,3 +25,6 @@ type Data struct {
 	Tags        []string    `json:"tags,omitempty"`
 	Timestamp   ISO8601Time `json:"timestamp"`
 }
+
+// RawData json mapped data
+type RawData map[string]any

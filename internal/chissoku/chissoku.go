@@ -1,9 +1,10 @@
-// Package chissoku implements main chissoku program
-package main
+// Package chissioku is core part of chissoku
+package chissoku
 
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
@@ -17,31 +18,16 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/alecthomas/kong"
 	"go.bug.st/serial"
 
-	"github.com/northeye/chissoku/options"
-	"github.com/northeye/chissoku/output"
-	"github.com/northeye/chissoku/types"
+	"github.com/northeye/chissoku/internal/output"
+	"github.com/northeye/chissoku/internal/types"
 )
-
-func main() {
-	var c Chissoku
-	ctx := kong.Parse(&c,
-		kong.Name(ProgramName),
-		kong.Vars{"version": "v" + Version, "outputters": strings.Join(c.registerOutputters(), ",")},
-		kong.Description(Description),
-		kong.Bind(&c.Options))
-	if err := ctx.Run(); err != nil {
-		slog.Error("chissoku.Run()", "error", err)
-		os.Exit(1)
-	}
-}
 
 // Chissoku main program
 type Chissoku struct {
 	// Options
-	Options options.Options `embed:""`
+	Options Options `embed:""`
 
 	// Stdout output
 	output.Stdout `prefix:"stdout." group:"Stdout Output:"`
@@ -54,7 +40,7 @@ type Chissoku struct {
 	activeOutputters atomic.Value
 
 	// reader channel
-	rchan chan *types.Data
+	rchan chan []byte
 	// deactivate outputter
 	dechan chan string
 	// cancel
@@ -70,7 +56,7 @@ type Chissoku struct {
 }
 
 // AfterApply kong hook
-func (c *Chissoku) AfterApply(opts *options.Options) error {
+func (c *Chissoku) AfterApply(opts *Options) error {
 	var writer io.Writer = os.Stderr
 	level := slog.LevelInfo
 	if opts.Debug {
@@ -81,10 +67,9 @@ func (c *Chissoku) AfterApply(opts *options.Options) error {
 	}
 	slog.SetDefault(slog.New(slog.NewJSONHandler(writer, &slog.HandlerOptions{Level: level})))
 
-	c.rchan = make(chan *types.Data)
+	c.rchan = make(chan []byte)
 	c.dechan = make(chan string)
 	ctx := output.ContextWithDeactivateChannel(context.Background(), c.dechan)
-	ctx = context.WithValue(ctx, options.ContextKeyOptions{}, opts)
 	ctx, c.cancel = context.WithCancel(ctx)
 
 	// initialize and filter outputters
@@ -134,7 +119,7 @@ const (
 
 // Run run the program
 func (c *Chissoku) Run() (err error) {
-	slog.Debug("Start", "name", ProgramName, "version", Version)
+	slog.Debug("Start chissoku", "name", programName, "version", version)
 
 	opts := &c.Options
 
@@ -190,7 +175,20 @@ func (c *Chissoku) readDevice() error {
 			d.CO2, _ = strconv.ParseInt(m[0][1], 10, 64)
 			d.Humidity, _ = strconv.ParseFloat(m[0][2], 64)
 			d.Temperature, _ = strconv.ParseFloat(m[0][3], 64)
-			c.rchan <- d
+			b, _ := json.Marshal(d)
+			if len(c.Options.Maps) > 0 {
+				var raw types.RawData
+				err := json.Unmarshal(b, &raw)
+				if err != nil {
+					slog.Error("Failed to unmarshal data", "error", err)
+					return err
+				}
+				for k, v := range c.Options.Maps {
+					raw[k] = v
+				}
+				b, _ = json.Marshal(raw)
+			}
+			c.rchan <- b
 		} else if text[:6] == `OK STP` {
 			return nil // exit 0
 		} else {
@@ -261,8 +259,8 @@ func (c *Chissoku) prepareDevice() (err error) {
 	return
 }
 
-// OutputterNames returns names of impleneted outputter
-func (c *Chissoku) registerOutputters() (names []string) {
+// RegisterOutputters returns names of impleneted outputter
+func (c *Chissoku) RegisterOutputters() (names []string) {
 	if c.outputters != nil {
 		for k := range c.outputters {
 			names = append(names, k)

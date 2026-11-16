@@ -1,0 +1,97 @@
+{
+  "formatters": {
+    "enable": [
+      "gci"
+    ],
+    "exclusions": {
+      "generated": "lax",
+      "paths": [
+        "third_party$",
+        "builtin$",
+        "examples$"
+      ]
+    },
+    "settings": {
+      "gci": {
+        "sections": [
+          "standard",
+          "default",
+          "prefix(github.com/northeye/chissoku)"
+        ]
+      }
+    }
+  },
+  "linters": {
+    "enable": [
+      "errorlint",
+      "goconst",
+      "predeclared",
+      "staticcheck",
+      "tparallel",
+      "unconvert",
+      "unparam",
+      "whitespace"
+    ],
+    "exclusions": {
+      "generated": "lax",
+      "paths": [
+        "third_party$",
+        "builtin$",
+        "examples$"
+      ],
+      "presets": [
+        "comments",
+        "common-false-positives",
+        "legacy",
+        "std-error-handling"
+      ],
+      "rules": [
+        {
+          "linters": [
+            "errcheck"
+          ],
+          "path": "_test\\.go"
+        },
+        {
+          "linters": [
+            "goconst"
+          ],
+          "path": "(.+)_test\\.go"
+        }
+      ]
+    },
+    "settings": {
+      "dupl": {
+        "threshold": 100
+      },
+      "errcheck": {
+        "exclude-functions": [
+          "(go.bug.st/serial.Port).Write",
+          "(go.bug.st/serial.Port).SetReadTimeout",
+          "(*github.com/northeye/chissoku/internal/output.Base).Initialize"
+        ]
+      },
+      "goconst": {
+        "min-len": 4,
+        "min-occurrences": 4
+      },
+      "gocyclo": {
+        "min-complexity": 10
+      },
+      "staticcheck": {
+        "checks": [
+          "all",
+          "-ST1000",
+          "-ST1003",
+          "-ST1016"
+        ]
+      }
+    }
+  },
+  "run": {
+    "modules-download-mode": "readonly",
+    "tests": true,
+    "timeout": "10m"
+  },
+  "version": "2"
+}

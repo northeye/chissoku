@@ -1,11 +1,12 @@
-FROM golang:1.21-alpine AS build
+FROM golang:1.27 AS build
 
 WORKDIR /build
 
-COPY . .
-RUN go build .
+ADD . .
 
-FROM gcr.io/distroless/static-debian12:latest
+RUN CGO_ENABLED=0 go build -o chissoku ./cmd/chissoku
+
+FROM gcr.io/distroless/static-debian13:latest
 
 COPY --from=build /build/chissoku /usr/local/bin/
 
