@@ -1,28 +1,24 @@
-// Package chissioku is core part of chissoku
+// Package chissoku is core part of chissoku
 package chissoku
 
 import (
-	"bufio"
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"io"
 	"log/slog"
 	"os"
 	"os/signal"
 	"reflect"
-	"regexp"
-	"strconv"
-	"strings"
-	"sync"
-	"sync/atomic"
+	"syscall"
 	"time"
-
-	"go.bug.st/serial"
 
 	"github.com/northeye/chissoku/internal/output"
 	"github.com/northeye/chissoku/internal/types"
 )
+
+// how long to wait for the device to respond to the STP command on shutdown
+const stopTimeout = time.Second
 
 // Chissoku main program
 type Chissoku struct {
@@ -36,23 +32,6 @@ type Chissoku struct {
 
 	// available outputters
 	outputters map[string]output.Outputter
-	// active outputters
-	activeOutputters atomic.Value
-
-	// reader channel
-	rchan chan []byte
-	// deactivate outputter
-	dechan chan string
-	// cancel
-	cancel func()
-
-	// serial device
-	port serial.Port
-	// serial scanner
-	scanner *bufio.Scanner
-
-	// cleanup
-	cleanup func()
 }
 
 // AfterApply kong hook
@@ -66,219 +45,153 @@ func (c *Chissoku) AfterApply(opts *Options) error {
 		writer = io.Discard
 	}
 	slog.SetDefault(slog.New(slog.NewJSONHandler(writer, &slog.HandlerOptions{Level: level})))
+	return nil
+}
 
-	c.rchan = make(chan []byte)
-	c.dechan = make(chan string)
-	ctx := output.ContextWithDeactivateChannel(context.Background(), c.dechan)
-	ctx, c.cancel = context.WithCancel(ctx)
+// Run run the program
+func (c *Chissoku) Run() error {
+	slog.Debug("Start chissoku", "name", programName, "version", version)
 
-	// initialize and filter outputters
-	a := make(map[string]output.Outputter, len(opts.Output))
-	for _, name := range opts.Output {
-		if o, ok := c.outputters[name]; ok {
-			if err := o.Initialize(ctx); err != nil {
-				slog.Error("Initialize outputter", "outputter", o.Name(), "error", err)
-				continue
-			}
-			a[name] = o
-		}
-	}
-	if len(a) == 0 {
-		return fmt.Errorf("no active outputters are avaiable")
-	}
-	c.activeOutputters.Store(a)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	ctx, cancel := context.WithCancel(ctx)
 
-	c.cleanup = sync.OnceFunc(func() {
-		// exit the program cleanly
-		c.cancel()
-		for _, o := range c.activeOutputters.Load().(map[string]output.Outputter) {
-			o.Close()
-		}
-		if c.port != nil {
-			slog.Debug("Sending command", "command", CommandSTP)
-			// nolint: errcheck
-			c.port.Write([]byte(CommandSTP + "\r\n"))
+	// outputters deactivating themselves are notified through this channel
+	deactivated := make(chan string)
+	octx := output.WithDeactivator(ctx, func(o output.Outputter) {
+		select {
+		case deactivated <- o.Name():
+		case <-ctx.Done():
 		}
 	})
 
-	return nil
-}
-
-const (
-	// CommandSTP the STP Command
-	CommandSTP string = `STP`
-	// CommandID the ID? Command
-	CommandID string = `ID?`
-	// CommandSTA the STA Command
-	CommandSTA string = `STA`
-	// ResponseOK the OK response
-	ResponseOK string = `OK`
-	// ResponseNG the NG response
-	ResponseNG string = `NG`
-)
-
-// Run run the program
-func (c *Chissoku) Run() (err error) {
-	slog.Debug("Start chissoku", "name", programName, "version", version)
-
-	opts := &c.Options
-
-	if c.port, err = serial.Open(opts.Device, &serial.Mode{
-		BaudRate: 115200,
-		DataBits: 8,
-		StopBits: serial.OneStopBit,
-		Parity:   serial.NoParity,
-	}); err != nil {
-		slog.Error("Opening serial", "error", err, "device", opts.Device)
-		return err
-	}
-	c.port.SetReadTimeout(time.Second * 10)
-
-	// initialize UD-CO2S
-	if err := c.prepareDevice(); err != nil {
-		return err
-	}
-
-	// signalHandler
-	sigch := make(chan os.Signal, 1)
-	signal.Notify(sigch, os.Interrupt)
-	// signal handler
-	go func() {
-		<-sigch
-		c.cleanup()
-		<-time.After(time.Second)
-		slog.Error("No response from device")
-		os.Exit(128)
-	}()
-
-	// main
-	go c.dispatch()
-
-	if err = c.readDevice(); err != nil {
-		slog.Error("Error on readDevice", "err", err)
-	}
-	slog.Debug("Close Serial port")
-	c.port.Close()
-
-	return err
-}
-
-// readDevice read data from serial device
-func (c *Chissoku) readDevice() error {
-	re := regexp.MustCompile(`CO2=(\d+),HUM=([0-9\.]+),TMP=([0-9\.-]+)`)
-	// as main loop
-	for c.scanner.Scan() {
-		text := c.scanner.Text()
-		m := re.FindAllStringSubmatch(text, -1)
-		if len(m) > 0 {
-			d := &types.Data{Timestamp: types.ISO8601Time(time.Now()), Tags: c.Options.Tags}
-			d.CO2, _ = strconv.ParseInt(m[0][1], 10, 64)
-			d.Humidity, _ = strconv.ParseFloat(m[0][2], 64)
-			d.Temperature, _ = strconv.ParseFloat(m[0][3], 64)
-			b, _ := json.Marshal(d)
-			if len(c.Options.Maps) > 0 {
-				var raw types.RawData
-				err := json.Unmarshal(b, &raw)
-				if err != nil {
-					slog.Error("Failed to unmarshal data", "error", err)
-					return err
-				}
-				for k, v := range c.Options.Maps {
-					raw[k] = v
-				}
-				b, _ = json.Marshal(raw)
-			}
-			c.rchan <- b
-		} else if text[:6] == `OK STP` {
-			return nil // exit 0
-		} else {
-			slog.Warn("Read unmatched string", "str", text)
+	active := c.initOutputters(octx)
+	defer func() {
+		// cancel first so that no outputter blocks on deactivation while being closed
+		cancel()
+		for _, o := range active {
+			o.Close()
 		}
+	}()
+	if len(active) == 0 {
+		return errors.New("no active outputters are available")
 	}
-	if err := c.scanner.Err(); err != nil {
-		slog.Error("Scanner read error", "error", err)
-		c.cleanup()
+
+	dev, err := openDevice(c.Options.Device)
+	if err != nil {
 		return err
 	}
-	return nil
+	defer dev.Close()
+
+	if err := dev.prepare(); err != nil {
+		return err
+	}
+
+	records := make(chan *types.Data)
+	readErr := make(chan error, 1)
+	go func() { readErr <- dev.read(ctx, records) }()
+
+	c.dispatch(ctx, active, records, deactivated)
+
+	// shutdown: stop receiving signals so that a second interrupt kills the process immediately
+	stop()
+	cancel()
+	if err := dev.send(commandSTP); err != nil {
+		slog.Debug("Failed to stop the device", "error", err)
+	}
+	select {
+	case err := <-readErr:
+		return err
+	case <-time.After(stopTimeout):
+		return errors.New("no response from device")
+	}
 }
 
-func (c *Chissoku) dispatch() {
+// dispatch delivers records to the active outputters until ctx is canceled,
+// records is closed or all outputters are deactivated.
+func (c *Chissoku) dispatch(ctx context.Context, active map[string]output.Outputter, records <-chan *types.Data, deactivated <-chan string) {
 	for {
 		select {
-		case deactivate := <-c.dechan:
-			a := c.activeOutputters.Load().(map[string]output.Outputter)
-			delete(a, deactivate)
-			if len(a) == 0 {
-				slog.Debug("No outputers are alive")
-				c.cleanup()
-				return
-			}
-			c.activeOutputters.Store(a)
-		case data, more := <-c.rchan:
-			if !more {
-				slog.Debug("Reader channel has ben closed")
-				return
-			}
-			for _, o := range c.activeOutputters.Load().(map[string]output.Outputter) {
-				o.Output(data)
-			}
-		}
-	}
-}
-
-// initialize and prepare the device
-func (c *Chissoku) prepareDevice() (err error) {
-	c.scanner = bufio.NewScanner(c.port)
-	c.scanner.Split(bufio.ScanLines)
-
-	commands := []string{CommandSTP, CommandID, CommandSTA}
-	do := make([]string, 0, len(commands))
-	defer func() {
-		level := slog.LevelInfo
-		if err != nil {
-			level = slog.LevelError
-		}
-		slog.Log(context.Background(), level, "Prepare UD-CO2S", "commands", do, "error", err)
-	}()
-	for _, cmd := range commands {
-		do = append(do, cmd)
-		if _, err = c.port.Write([]byte(cmd + "\r\n")); err != nil {
+		case <-ctx.Done():
+			slog.Debug("Context canceled", "cause", context.Cause(ctx))
 			return
-		}
-		time.Sleep(time.Millisecond * 100) // wait
-		for c.scanner.Scan() {
-			t := c.scanner.Text()
-			if strings.HasPrefix(t[:2], ResponseOK) {
-				break
-			} else if strings.HasPrefix(t[:2], ResponseNG) {
-				return fmt.Errorf("command `%v` failed", cmd)
+		case name := <-deactivated:
+			if o, ok := active[name]; ok {
+				delete(active, name)
+				o.Close()
+			}
+			if len(active) == 0 {
+				slog.Debug("No outputters are alive")
+				return
+			}
+		case d, ok := <-records:
+			if !ok {
+				slog.Debug("Reader channel has been closed")
+				return
+			}
+			b, err := c.encode(d)
+			if err != nil {
+				slog.Error("Failed to encode data", "error", err)
+				continue
+			}
+			for _, o := range active {
+				o.Output(b)
 			}
 		}
 	}
-	return
 }
 
-// RegisterOutputters returns names of impleneted outputter
-func (c *Chissoku) RegisterOutputters() (names []string) {
-	if c.outputters != nil {
-		for k := range c.outputters {
-			names = append(names, k)
-		}
-		return names
+// encode encodes the data as JSON with tags and additional maps
+func (c *Chissoku) encode(d *types.Data) ([]byte, error) {
+	d.Tags = c.Options.Tags
+	b, err := json.Marshal(d)
+	if err != nil || len(c.Options.Maps) == 0 {
+		return b, err
 	}
-	c.outputters = make(map[string]output.Outputter)
-	rv := reflect.Indirect(reflect.ValueOf(c))
-	rt := rv.Type()
-	for i := 0; i < rt.NumField(); i++ {
-		f := rt.Field(i)
-		if !f.IsExported() {
+
+	var raw types.RawData
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return nil, err
+	}
+	for k, v := range c.Options.Maps {
+		raw[k] = v
+	}
+	return json.Marshal(raw)
+}
+
+// initOutputters initializes the outputters specified by the options and returns the active ones
+func (c *Chissoku) initOutputters(ctx context.Context) map[string]output.Outputter {
+	active := make(map[string]output.Outputter, len(c.Options.Output))
+	for _, name := range c.Options.Output {
+		o, ok := c.outputters[name]
+		if !ok {
 			continue
 		}
-		if value, ok := rv.Field(i).Addr().Interface().(output.Outputter); ok {
-			name := value.Name()
-			names = append(names, name)
-			c.outputters[name] = value
+		if _, dup := active[name]; dup {
+			continue
+		}
+		if err := o.Initialize(ctx); err != nil {
+			slog.Error("Initialize outputter", "outputter", name, "error", err)
+			continue
+		}
+		active[name] = o
+	}
+	return active
+}
+
+// RegisterOutputters registers the outputters embedded in Chissoku and returns their names
+func (c *Chissoku) RegisterOutputters() []string {
+	c.outputters = make(map[string]output.Outputter)
+	var names []string
+	rv := reflect.ValueOf(c).Elem()
+	rt := rv.Type()
+	for i := range rt.NumField() {
+		if !rt.Field(i).IsExported() {
+			continue
+		}
+		if o, ok := rv.Field(i).Addr().Interface().(output.Outputter); ok {
+			names = append(names, o.Name())
+			c.outputters[o.Name()] = o
 		}
 	}
 	return names

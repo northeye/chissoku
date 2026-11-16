@@ -12,9 +12,9 @@ type Outputter interface {
 	// Lower cased struct name is recommended.
 	Name() string
 
-	// Intialize the outputter and run the receiver loop as own goroutine.
+	// Initialize the outputter and run the receiver loop as own goroutine.
 	// When it returns non-nil error the outputter will be disabled.
-	// The context can be receive event of parent's termination through the `ctx.Done()`.
+	// The context is canceled upon the parent's termination.
 	Initialize(context.Context) error
 
 	// Output the data.
@@ -22,24 +22,25 @@ type Outputter interface {
 	Output([]byte)
 
 	// Close cleanup the outputter.
-	// It's automatically invoked upon the parent's termination.
-	// If there is a need to call it from the child side, it should be implemented as atomically and maintain idempotence.
-	// So, `sync.OnceFunc` is useful.
+	// It's invoked by the parent when the outputter has been deactivated or upon the parent's termination.
+	// It must be idempotent.
 	Close()
 }
 
-// contextKeyDeactivateOutputterChannel context value key for DeactivateOutputterChannel
-type contextKeyDeactivateOutputterChannel struct{}
+// contextKeyDeactivator context value key for the deactivator function
+type contextKeyDeactivator struct{}
 
-// ContextWithDeactivateChannel new context with deactivate channel
-func ContextWithDeactivateChannel(ctx context.Context, c chan string) context.Context {
-	return context.WithValue(ctx, contextKeyDeactivateOutputterChannel{}, c)
+// WithDeactivator returns a new context carrying f, which is called when an outputter deactivates itself.
+// f must not block indefinitely.
+func WithDeactivator(ctx context.Context, f func(Outputter)) context.Context {
+	return context.WithValue(ctx, contextKeyDeactivator{}, f)
 }
 
-// notify deactivation of an outputter to parent's main loop.
+// deactivate notifies the parent that the outputter should be removed from the active outputters.
+// The parent will call o.Close() afterwards.
 func deactivate(ctx context.Context, o Outputter) {
-	if c, ok := ctx.Value(contextKeyDeactivateOutputterChannel{}).(chan string); ok {
+	if f, ok := ctx.Value(contextKeyDeactivator{}).(func(Outputter)); ok {
 		slog.Debug("Deactivate", "outputter", o.Name())
-		c <- o.Name()
+		f(o)
 	}
 }
