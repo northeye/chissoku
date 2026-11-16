@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.1](https://github.com/northeye/chissoku/compare/v2.2.0...v2.2.1) (2026-11-16)
+
+
+### Bug Fixes
+
+* refactor core loop and outputters ([#17](https://github.com/northeye/chissoku/issues/17)) ([8a8d423](https://github.com/northeye/chissoku/commit/8a8d4236bbaf878e74c9f43708fe4685fec1d48f))
+
 ## [2.2.0](https://github.com/northeye/chissoku/compare/v2.1.1...v2.2.0) (2026-11-16)
 
 
