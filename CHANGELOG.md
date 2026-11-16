@@ -1,5 +1,26 @@
 # Changelog
 
+## [2.2.0](https://github.com/northeye/chissoku/compare/v2.1.1...v2.2.0) (2026-11-16)
+
+
+### Features
+
+* **mqtt:** add retain option ([d9ef4f4](https://github.com/northeye/chissoku/commit/d9ef4f48a61dc806e80471f255c655dcd0f7087a))
+* **mqtt:** add retain option ([#16](https://github.com/northeye/chissoku/issues/16)) ([843f4bb](https://github.com/northeye/chissoku/commit/843f4bbc5190a848227d5d250e2a6d59b3fd825e))
+
+
+### Bug Fixes
+
+* **ci:** fix release-please ([00f284c](https://github.com/northeye/chissoku/commit/00f284c7d23df1a79b90c34b550ea8ecf21c5802))
+* **ci:** fix release-please ([#11](https://github.com/northeye/chissoku/issues/11)) ([d8ee616](https://github.com/northeye/chissoku/commit/d8ee6165211f9f1d4b172fd1feea311792ebf0cb))
+* **ci:** fix release-please-config ([d1d828a](https://github.com/northeye/chissoku/commit/d1d828a0d8673bba77e038f03b3a3b027863040d))
+* **ci:** fix release-please-config ([#12](https://github.com/northeye/chissoku/issues/12)) ([628b225](https://github.com/northeye/chissoku/commit/628b2259ad07c2c66556aa07349748250d415361))
+* fix import grouping ([66e192a](https://github.com/northeye/chissoku/commit/66e192a08d60371d53417981e18b890918cb34d3))
+* json.Marshal: error checking ([f4df2e4](https://github.com/northeye/chissoku/commit/f4df2e4fe3e0d72c256657ab53f16d647de3ef24))
+* **refactor:** minor refactoring ([371c5e7](https://github.com/northeye/chissoku/commit/371c5e762513d628e7abd26621c6032d4411c8e9))
+* **release:** add .release-please-manifest.json ([565dd1e](https://github.com/northeye/chissoku/commit/565dd1e78d339d1ea11fd6cd6dc3e26ed8cd17bc))
+* **release:** add .release-please-manifest.json ([#13](https://github.com/northeye/chissoku/issues/13)) ([3e3fc0a](https://github.com/northeye/chissoku/commit/3e3fc0a3be0d11d3403f94a1ef5f3eedd5b1d5b0))
+
 ## [2.1.1](https://github.com/northeye/chissoku/compare/v2.1.0...v2.1.1) (2024-01-09)
 
 
