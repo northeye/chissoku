@@ -78,7 +78,7 @@ outputter のオプションは基本的に outputter の名前がプレフィ�
 コマンドラインオプションの `--output=stdout` により標準出力にデータを流せます。<br>
 |オプション|意味|
 |----|----|
-|--stdout.interval=`INT`|データを出力する間隔(秒)(`default: 60`)|
+|--stdout.interval=`INT`|データを出力する間隔(秒)(`default: 60`, 0以下で受信ごとに出力)|
 |--stdout.iterations=`INT`|データを出力する回数(`default: 0(制限なし)`)|
 
 ### MQTT Outputter
@@ -88,12 +88,13 @@ outputter のオプションは基本的に outputter の名前がプレフィ�
 
 |オプション|意味|
 |----|----|
-|--mqtt.interval=`INT`|データを出力する間隔(秒)(`default: 60`)|
+|--mqtt.interval=`INT`|データを出力する間隔(秒)(`default: 60`, 0以下で受信ごとに出力)|
 |--mqtt.address=`STRING`|MQTTブローカーURL (例: `tcp://mosquitto:1883`, `ssl://mosquitto:8883`)|
 |--mqtt.topic=`STRING`|Publish topic (例: `sensors/co2`)|
 |--mqtt.client-id=`STRING`|MQTT Client ID `default: chissoku`|
-|--mqtt.qos=`INT`|publish QoS `default: 0`|
-|--mqtt.ssl-ca-file=`STRING`|SSL Root CA|
+|--mqtt.qos=`INT`|publish QoS (0, 1, 2) `default: 0`|
+|--mqtt.retain|Retain フラグを付けて publish する `default: false`|
+|--mqtt.ssl-cafile=`STRING`|SSL Root CA|
 |--mqtt.ssl-cert=`STRING`|SSL Client Certificate|
 |--mqtt.ssl-key=`STRING`|SSL Client Private Key|
 |--mqtt.username=`STRING`|MQTT v3.1/3.1.1 Authenticate Username|
@@ -110,6 +111,7 @@ MQTT メソッドがうまく動かなければ標準出力を [mosquitto_pub](h
 |-o, --output=`stdout,...`|出力メソッドの指定(`default: stdout`)|
 |-q, --quiet|標準エラーの出力をしない|
 |-t, --tags=`TAG,...`|出力するJSONに `tags` フィールドを追加する(コンマ区切り文字列)|
+|-m, --maps=`KEY=VALUE;...`|出力するJSONに任意のフィールドを追加する(例: `--maps=room=1;floor=2`)|
 |-h, --help|オプションヘルプを表示する|
 |-v, --version|バージョン情報を表示する|
 |-d, --debug|デバッグログの出力を行う|
